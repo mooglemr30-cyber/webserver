@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Chat - Web Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .setup-section, .room-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(235, 51, 73, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+
+        .status-success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border-left: 4px solid #388e3c;
+        }
+
+        .status-warning {
+            background: #fff3e0;
+            color: #f57c00;
+            border-left: 4px solid #f57c00;
+        }
+
+        .status-error {
+            background: #ffebee;
+            color: #d32f2f;
+            border-left: 4px solid #d32f2f;
+        }
+
+        .participants {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .participants h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .participant {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .participant-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .participant-name {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .audio-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        .control-btn.mic {
+            background: #4caf50;
+            color: white;
+        }
+
+        .control-btn.mic.muted {
+            background: #f44336;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .rooms-list {
+            margin-top: 30px;
+        }
+
+        .room-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .room-info h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .room-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .icon {
+            margin-right: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice Chat Room</h1>
+        <p class="subtitle">Join the main voice chat - Server host is always present!</p>
+
+        <!-- Setup Section -->
+        <div id="setupSection" class="setup-section">
+            <div class="input-group">
+                <label for="userName">Your Name</label>
+                <input type="text" id="userName" placeholder="Enter your name" value="Guest">
+            </div>
+
+                        <button onclick="joinMainRoom()" class="btn btn-primary">
+                <span class="icon">🎤</span> Join Voice Chat
+            </button>
+        </div>
+
+        <!-- Room Section -->
+        <div id="roomSection" class="room-section hidden">
+            <div id="statusDiv" class="status status-info">
+                Connecting to main voice chat room...
+            </div>
+
+            <div class="controls">
+                <button id="micBtn" class="control-btn mic" onclick="toggleMic()" title="Toggle Microphone">
+                    🎤
+                </button>
+                <button class="control-btn btn-danger" onclick="leaveRoom()" title="Leave Room">
+                    �
+                </button>
+            </div>
+
+            <div class="participants">
+                <h3>
+                    <span class="icon">👥</span>
+                    Participants (<span id="participantCount">1</span>)
+                </h3>
+                <p style="color: #666; font-size: 14px;">Server Host is always present in this room</p>
+                <div id="participantsList"></div>
+            </div>
+
+            <button class="btn-danger" onclick="leaveRoom()" style="width: 100%;">
+                Leave Room
+            </button>
+        </div>
+    </div>
+
+        <!-- Room Section -->
+        <div id="roomSection" class="room-section hidden">
+            <div id="statusDiv" class="status status-info">
+                Connecting to voice chat...
+            </div>
+
+            <div class="controls">
+                <button id="micBtn" class="control-btn mic" onclick="toggleMic()" title="Toggle Microphone">
+                    🎤
+                </button>
+                <button class="control-btn btn-danger" onclick="leaveRoom()" title="Leave Room">
+                    📞
+                </button>
+            </div>
+
+            <div class="participants">
+                <h3>
+                    <span class="icon">👥</span>
+                    Participants
+                </h3>
+                <div id="participantsList"></div>
+            </div>
+
+            <button class="btn-danger" onclick="leaveRoom()" style="width: 100%;">
+                Leave Room
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let localStream = null;
+        let peerConnections = {};
+        let currentRoomId = null;
+        let currentParticipantId = null;
+        let isMuted = false;
+        let pollingInterval = null;
+        const MAIN_ROOM_ID = 'main-voice-room';
+
+        const configuration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        async function joinMainRoom() {
+            const userName = document.getElementById('userName').value.trim() || 'Guest';
+
+            try {
+                showStatus('Requesting microphone access...', 'info');
+
+                // Request microphone access
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+
+                showStatus('Microphone access granted! Joining main room...', 'success');
+
+                // Join the main room
+                const response = await fetch(`/api/voice-chat/join/${MAIN_ROOM_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: userName })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentRoomId = data.room_id;
+                    currentParticipantId = data.participant_id;
+
+                    document.getElementById('setupSection').classList.add('hidden');
+                    document.getElementById('roomSection').classList.remove('hidden');
+
+                    showStatus(`Welcome to ${data.room_name}! 🎉`, 'success');
+                    updateParticipantCount(data.participants);
+
+                    // Start polling for signaling messages
+                    startPolling();
+                } else {
+                    showStatus('Failed to join room: ' + data.error, 'error');
+                    if (localStream) {
+                        localStream.getTracks().forEach(track => track.stop());
+                    }
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                }
+            }
+        }
+
+        function updateParticipantCount(count) {
+            const countElement = document.getElementById('participantCount');
+            if (countElement) {
+                countElement.textContent = count;
+            }
+        }
+
+        async function loadRooms() {
+            // No longer needed - single room only
+        }
+
+        async function joinRoomById(roomId, userName) {
+            // Always join the main room
+            await joinMainRoom();
+        }
+
+        async function createRoom() {
+            // Always join the main room instead
+            await joinMainRoom();
+        }
+
+        async function leaveRoom() {
+            if (!currentRoomId || !currentParticipantId) return;
+
+            try {
+                // Stop polling
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
+
+                // Close all peer connections
+                Object.values(peerConnections).forEach(pc => pc.close());
+                peerConnections = {};
+
+                // Stop local stream
+                stopLocalStream();
+
+                await fetch(`/api/voice-chat/leave/${currentRoomId}/${currentParticipantId}`, {
+                    method: 'POST'
+                });
+
+                currentRoomId = null;
+                currentParticipantId = null;
+
+                document.getElementById('setupSection').classList.remove('hidden');
+                document.getElementById('roomSection').classList.add('hidden');
+
+                showStatus('Left the room', 'info');
+            } catch (error) {
+                console.error('Error leaving room:', error);
+            }
+        }
+
+        function toggleMic() {
+            if (!localStream) return;
+
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                isMuted = !audioTrack.enabled;
+
+                const micBtn = document.getElementById('micBtn');
+                if (isMuted) {
+                    micBtn.classList.add('muted');
+                    micBtn.textContent = '🔇';
+                } else {
+                    micBtn.classList.remove('muted');
+                    micBtn.textContent = '🎤';
+                }
+            }
+        }
+
+        function stopLocalStream() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+        }
+
+        function startPolling() {
+            // Poll every 2 seconds for new messages and participants
+            pollingInterval = setInterval(async () => {
+                if (!currentRoomId || !currentParticipantId) return;
+
+                try {
+                    const response = await fetch(`/api/voice-chat/poll/${currentRoomId}/${currentParticipantId}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        updateParticipantsList(data.participants);
+                        // Process signaling messages (WebRTC setup would go here)
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 2000);
+        }
+
+        function updateParticipantsList(participants) {
+            const participantsList = document.getElementById('participantsList');
+            
+            if (participants.length === 0) {
+                participantsList.innerHTML = '<p style="text-align: center; color: #666;">No participants yet</p>';
+                return;
+            }
+
+            participantsList.innerHTML = participants.map(p => `
+                <div class="participant">
+                    <div class="participant-icon">${p.name.charAt(0).toUpperCase()}</div>
+                    <div class="participant-name">${escapeHtml(p.name)}</div>
+                    <div class="audio-indicator"></div>
+                </div>
+            `).join('');
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusDiv');
+            statusDiv.textContent = message;
+            statusDiv.className = `status status-${type}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load rooms on page load
+        window.addEventListener('load', () => {
+            loadRooms();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            leaveRoom();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+name: 🤖 AI Assistant Task
+description: Task for AI assistants to implement
+title: "[AI Task]: "
+labels: ["ai-task", "enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is designed for creating tasks that AI coding assistants can implement.
+
+  - type: textarea
+    id: task-description
+    attributes:
+      label: Task Description
+      description: Clear description of what needs to be done
+      placeholder: Implement a new feature that...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: task-type
+    attributes:
+      label: Task Type
+      options:
+        - New Feature Implementation
+        - Bug Fix
+        - Code Refactoring
+        - Performance Optimization
+        - Documentation Update
+        - Test Coverage Improvement
+        - Security Enhancement
+        - Database Migration
+    validations:
+      required: true
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Complexity Level
+      options:
+        - Low (< 1 hour, simple changes)
+        - Medium (1-4 hours, moderate complexity)
+        - High (> 4 hours, complex changes)
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements
+      description: Detailed requirements and acceptance criteria
+      placeholder: |
+        1. Must implement X
+        2. Should handle Y
+        3. Must include tests for Z
+    validations:
+      required: true
+
+  - type: textarea
+    id: files-to-modify
+    attributes:
+      label: Files to Modify/Create
+      description: List of files that will be affected
+      placeholder: |
+        - src/app.py (modify)
+        - src/new_feature.py (create)
+        - tests/test_new_feature.py (create)
+
+  - type: textarea
+    id: api-spec
+    attributes:
+      label: API Specification (if applicable)
+      render: json
+      placeholder: |
+        {
+          "endpoint": "POST /api/endpoint",
+          "authentication": "JWT required",
+          "request_body": {...},
+          "response": {...}
+        }
+
+  - type: textarea
+    id: implementation-hints
+    attributes:
+      label: Implementation Hints
+      description: Hints or guidance for implementation
+      placeholder: |
+        - Use the existing auth_system.py pattern
+        - Follow the decorator pattern from other endpoints
+        - Add to API_REFERENCE.md
+
+  - type: textarea
+    id: test-cases
+    attributes:
+      label: Test Cases
+      description: Specific test cases to implement
+      placeholder: |
+        1. Test successful operation
+        2. Test error handling
+        3. Test edge cases
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Implementation Checklist
+      options:
+        - label: Code implementation
+        - label: Unit tests
+        - label: Integration tests
+        - label: Documentation update
+        - label: API reference update
+        - label: CHANGELOG update
+        - label: Error handling
+        - label: Security review needed
+        - label: Performance testing needed
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical (Do immediately)
+        - High (Do soon)
+        - Medium (Normal priority)
+        - Low (Nice to have)
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Any dependencies or prerequisites
+      placeholder: |
+        - Requires feature X to be completed first
+        - Needs Python package Y
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria
+      description: How to verify the task is complete
+      placeholder: |
+        1. All tests pass
+        2. API endpoint responds correctly
+        3. Documentation updated
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: ai-capabilities
+    attributes:
+      label: AI Assistant Capabilities Needed
+      options:
+        - label: Code generation
+        - label: Code refactoring
+        - label: Test generation
+        - label: Documentation writing
+        - label: API design
+        - label: Security analysis
+        - label: Performance optimization
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any additional information for the AI assistant
+      placeholder: |
+        - Related files to review
+        - Similar implementations to reference
+        - Specific patterns to follow

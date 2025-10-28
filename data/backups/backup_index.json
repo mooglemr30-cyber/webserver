@@ -1,0 +1,20 @@
+{
+  "backup_test_backup_20251026_011742.tar.gz": {
+    "version": "2.0.0",
+    "backup_type": "test_backup",
+    "description": "",
+    "created_at": "2025-10-26T01:17:42.068249",
+    "server_version": "2.0.0",
+    "included_components": [
+      "data_storage",
+      "file_storage",
+      "program_storage",
+      "configuration",
+      "logs",
+      "user_data"
+    ],
+    "file_count": 16,
+    "total_size": 2610,
+    "checksum": "a5f0443f73bc2760191667e57ea65eeadc190dc0be4fb502904329cb03ba91a5"
+  }
+}

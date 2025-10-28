@@ -1,0 +1,9 @@
+version: "2"
+authtoken: # Add your ngrok authtoken here (get from https://dashboard.ngrok.com/get-started/your-authtoken)
+tunnels:
+  webserver:
+    addr: 8000
+    proto: http
+    name: "Data Storage Web Server"
+    # Optional: Set a custom subdomain (requires paid plan)
+    # subdomain: "mywebserver"

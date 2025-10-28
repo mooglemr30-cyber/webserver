@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dropdown Feature</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
+        h1 { color: #00c7ff; }
+        button { padding: 10px 20px; margin: 5px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background 0.2s; }
+        button:hover { background: #005a9e; }
+        .output { background: #000; padding: 15px; margin: 10px 0; border-radius: 4px; font-family: monospace; white-space: pre-wrap; border: 1px solid #333; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { margin-right: 10px; }
+        .input-group input { padding: 8px; border-radius: 4px; border: 1px solid #555; background: #2a2a2a; color: #e0e0e0; }
+
+        /* Modal Styles */
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 1000; display:flex; justify-content:center; align-items:center; }
+        .modal-content { background:#1e1e1e; border:2px solid #007acc; border-radius:8px; max-width: 700px; width:90%; max-height:80%; display: flex; flex-direction: column; }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding: 12px 16px; border-bottom: 1px solid #333; }
+        .modal-header h3 { color:#00c7ff; margin:0; }
+        .modal-header .close-btn { background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; }
+        .modal-body { padding: 16px; overflow-y: auto; }
+        .modal-body .info-text { color:#bbb; font-size:12px; margin-bottom:8px; }
+        .modal-footer { display:flex; justify-content:flex-end; gap:8px; padding: 12px 16px; border-top: 1px solid #333; }
+        .modal-footer .cancel-btn { background:#6c757d; }
+        .modal-footer .confirm-btn { background:#28a745; }
+
+        /* File List Styles */
+        .file-list-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #333; border-radius:6px; margin:6px 0; cursor:pointer; transition: all 0.2s; }
+        .file-list-item:hover { background:#2a2a2a; border-color:#007acc; }
+        .file-list-item input[type="radio"] { margin-left: 5px; }
+        .file-list-item .file-path { flex:1; font-family: 'Courier New', monospace; color:#00ff88; }
+        .file-list-item .file-badge { background:#444; color:#fff; padding:1px 6px; border-radius:10px; font-size:10px; margin-left:6px; }
+        .file-list-item .file-size { color:#888; font-size:11px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Test Dropdown Execution Feature</h1>
+
+    <div class="input-group">
+        <label for="projectIdInput">Project ID:</label>
+        <input type="text" id="projectIdInput" value="project_1761407170">
+    </div>
+    
+    <div>
+        <p>This test checks if the file selection modal appears when executing a project.</p>
+        <button onclick="testDropdown()">⚡ Execute Project</button>
+        <div id="output" class="output">Awaiting test...</div>
+    </div>
+
+    <!-- Modal Template -->
+    <template id="fileSelectModalTemplate">
+        <div class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>⚡ Select File to Execute</h3>
+                    <button class="close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="info-text">Choose which file from the project to run this time:</div>
+                    <div class="file-list"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-btn">Cancel</button>
+                    <button class="confirm-btn">▶️ Execute</button>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <script>
+        /**
+         * openFileSelectionModal - Creates and manages a modal for file selection.
+         * This is a refactored version that uses a <template> and CSS classes for better structure.
+         */
+        function openFileSelectionModal(projectId, candidates, onConfirm) {
+            const template = document.getElementById('fileSelectModalTemplate');
+            const modal = template.content.cloneNode(true).firstElementChild;
+            document.body.appendChild(modal);
+
+            const listDiv = modal.querySelector('.file-list');
+            const confirmBtn = modal.querySelector('.confirm-btn');
+            const cancelBtn = modal.querySelector('.cancel-btn');
+            const closeBtn = modal.querySelector('.close-btn');
+            
+            let selected = candidates[0]?.relative_path || null;
+            
+            const supportedBadges = (t) => t ? `<span class="file-badge">${t.toUpperCase()}</span>` : '';
+            
+            listDiv.innerHTML = candidates.map((c, i) => `
+                <label class="file-list-item">
+                    <input type="radio" name="fileChoice" value="${c.relative_path}" ${i === 0 ? 'checked' : ''} />
+                    <span class="file-path">${c.relative_path}</span>
+                    ${supportedBadges(c.program_type)}
+                    <span class="file-size">${c.size || 0} bytes</span>
+                </label>
+            `).join('');
+
+            listDiv.addEventListener('change', (e) => {
+                if (e.target.name === 'fileChoice') {
+                    selected = e.target.value;
+                }
+            });
+
+            const closeModal = () => {
+                document.body.removeChild(modal);
+                document.removeEventListener('keydown', handleEsc);
+            };
+
+            const handleEsc = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            };
+
+            confirmBtn.addEventListener('click', () => {
+                if (selected) {
+                    closeModal();
+                    onConfirm?.(selected);
+                }
+            });
+
+            cancelBtn.addEventListener('click', closeModal);
+            closeBtn.addEventListener('click', closeModal);
+            document.addEventListener('keydown', handleEsc);
+        }
+        
+        async function testDropdown() {
+            const projectId = document.getElementById('projectIdInput').value;
+            const output = document.getElementById('output');
+            output.innerHTML = `<span class="warning">Getting project info for '${projectId}'...</span>`;
+            
+            if (!projectId) {
+                output.innerHTML = `<span class="error">❌ Project ID cannot be empty.</span>`;
+                return;
+            }
+            
+            try {
+                const infoRes = await fetch(`/api/programs/info/${projectId}`);
+                if (!infoRes.ok) {
+                    throw new Error(`Server responded with status ${infoRes.status}`);
+                }
+                const infoData = await infoRes.json();
+                
+                if (!infoData.success) {
+                    output.innerHTML = `<span class="error">❌ Failed to get project info: ${infoData.error}</span>`;
+                    return;
+                }
+                
+                const files = infoData.program.files || [];
+                const supported = ['python', 'shell', 'javascript', 'perl', 'ruby'];
+                const candidates = files.filter(f => 
+                    supported.includes(f.program_type) || f.is_executable
+                );
+                
+                if (candidates.length === 0) {
+                    output.innerHTML = '<span class="error">❌ No executable files found in project.</span>';
+                    return;
+                }
+                
+                output.innerHTML = `<span class="success">✅ Found ${candidates.length} executable files.</span> Opening selection modal...`;
+                
+                openFileSelectionModal(projectId, candidates, async (chosenFile) => {
+                    output.innerHTML = `<span class="warning">Executing ${chosenFile}...</span>`;
+                    
+                    try {
+                        const execRes = await fetch(`/api/programs/execute/${projectId}`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({specific_file: chosenFile})
+                        });
+                        const execData = await execRes.json();
+                        
+                        if (execData.success) {
+                            output.innerHTML = `<span class="success">✅ Execution successful!</span>\n\n<pre>File: ${chosenFile}\nCommand: ${execData.command}\nExit Code: ${execData.exit_code}\n\nOutput:\n${execData.output || '(No output)'}</pre>`;
+                        } else {
+                            output.innerHTML = `<span class="error">❌ Execution failed: ${execData.error}</span>`;
+                        }
+                    } catch (e) {
+                        output.innerHTML = `<span class="error">❌ Error during execution: ${e.message}</span>`;
+                    }
+                });
+                
+            } catch (error) {
+                output.innerHTML = `<span class="error">❌ Error fetching project data: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

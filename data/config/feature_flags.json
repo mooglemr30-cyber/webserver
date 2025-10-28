@@ -1,0 +1,42 @@
+{
+  "experimental_ui": {
+    "enabled": false,
+    "description": "New experimental user interface",
+    "rollout_percentage": 0
+  },
+  "advanced_file_preview": {
+    "enabled": true,
+    "description": "Preview files in the browser",
+    "rollout_percentage": 100
+  },
+  "real_time_updates": {
+    "enabled": false,
+    "description": "WebSocket-based real-time updates",
+    "rollout_percentage": 0
+  },
+  "api_v2": {
+    "enabled": false,
+    "description": "New API version with improved features",
+    "rollout_percentage": 0
+  },
+  "advanced_analytics": {
+    "enabled": false,
+    "description": "Detailed usage analytics and metrics",
+    "rollout_percentage": 0
+  },
+  "plugin_system": {
+    "enabled": false,
+    "description": "Plugin architecture for extensibility",
+    "rollout_percentage": 0
+  },
+  "multi_user_support": {
+    "enabled": false,
+    "description": "Multiple user accounts and permissions",
+    "rollout_percentage": 0
+  },
+  "backup_restore": {
+    "enabled": true,
+    "description": "Automated backup and restore functionality",
+    "rollout_percentage": 100
+  }
+}

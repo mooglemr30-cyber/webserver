@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Web Server",
+			"type": "shell",
+			"command": "/home/tom/Documents/webserver/.venv/bin/python",
+			"args": [
+				"src/app.py"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

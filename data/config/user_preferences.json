@@ -1,0 +1,44 @@
+{
+  "ui": {
+    "theme": "dark",
+    "language": "en",
+    "timezone": "UTC",
+    "items_per_page": 20,
+    "auto_refresh": true,
+    "refresh_interval": 30,
+    "show_hidden_files": false,
+    "enable_animations": true,
+    "keyboard_shortcuts": true
+  },
+  "terminal": {
+    "font_family": "monospace",
+    "font_size": 14,
+    "line_height": 1.2,
+    "cursor_style": "block",
+    "enable_sound": false,
+    "history_size": 1000,
+    "auto_complete": true
+  },
+  "editor": {
+    "theme": "dark",
+    "font_size": 14,
+    "tab_size": 4,
+    "word_wrap": true,
+    "line_numbers": true,
+    "syntax_highlighting": true,
+    "auto_save": true
+  },
+  "notifications": {
+    "enabled": true,
+    "sound_enabled": false,
+    "desktop_notifications": true,
+    "email_notifications": false,
+    "webhook_notifications": false
+  },
+  "accessibility": {
+    "high_contrast": false,
+    "large_text": false,
+    "screen_reader_support": false,
+    "reduced_motion": false
+  }
+}

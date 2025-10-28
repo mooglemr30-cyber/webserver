@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network Web Server - Data & Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>🌐 Network Web Server</h1>
+        <p>Data Storage & Command Terminal</p>
+        <div style="margin-top:10px; display: flex; gap: 10px; justify-content: center;">
+            <a href="/dashboard" style="text-decoration:none;">
+                <button>📈 Backend Dashboard</button>
+            </a>
+            <a href="/voice-chat" style="text-decoration:none;">
+                <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🎤 Voice Chat</button>
+            </a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="section">
+            <h2>📊 Data Storage</h2>
+            <div class="flex-row">
+                <input type="text" id="dataKey" placeholder="Enter key name">
+                <button onclick="getData()">Get</button>
+                <button onclick="deleteData()" class="danger">Delete</button>
+            </div>
+            <textarea id="dataValue" placeholder="Enter any text or JSON... (auto-detects format)" rows="6"></textarea>
+            <div>
+                <button onclick="storeData()">💾 Store Data</button>
+                <button onclick="getAllData()">📋 Get All Data</button>
+                <button onclick="clearOutput('dataOutput')">🗑️ Clear</button>
+            </div>
+            <div id="dataOutput" class="output">Ready for data operations...</div>
+        </div>
+        
+        <div class="section">
+            <h2>💻 Command Terminal</h2>
+            <div style="background: #2d2d2d; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
+                <span style="color: #00ff00;">●</span> Connected to: <strong id="machineInfo">Loading...</strong>
+                <br>
+                <span style="color: #ffff00;">⚡</span> Commands execute directly on the server machine with full access to the filesystem
+            </div>
+            <div class="flex-row" style="margin-bottom: 10px;">
+                <select id="commandType" onchange="toggleSudoPassword()" style="flex: 0 0 150px;">
+                    <option value="normal">Normal User</option>
+                    <option value="sudo">Root (sudo)</option>
+                </select>
+                <label style="display: flex; align-items: center; gap: 5px; margin-left: 10px;">
+                    <input type="checkbox" id="interactiveMode" style="width: auto;">
+                    <span style="font-size: 13px;">Interactive Mode</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 5px; margin-left: 10px;">
+                    <input type="checkbox" id="persistentTerminal" onchange="togglePersistentTerminal()" style="width: auto;">
+                    <span style="font-size: 13px; color: #00ff00;">🖥️ Persistent Terminal (cd, env vars)</span>
+                </label>
+                <button onclick="clearOutput('commandOutput')" style="margin-left: auto;">🗑️ Clear</button>
+            </div>
+            <div id="sudoPasswordSection" style="display: none; margin: 10px 0;">
+                <input type="password" id="sudoPassword" placeholder="Enter sudo password..." style="width: 100%;">
+                <div style="font-size: 12px; color: #ffff00; margin: 5px 0;">
+                    ⚠️ Password is only used for this command and not stored anywhere
+                </div>
+            </div>
+            <div class="flex-row">
+                <input type="text" id="command" placeholder="Enter command (e.g., ls, pwd, apt update)..." onkeypress="handleCommandEnter(event)">
+                <button onclick="executeCommand()">▶️ Execute</button>
+            </div>
+            <div id="interactiveSection" style="display: none; margin: 10px 0; padding: 10px; background: #2d2d2d; border-radius: 4px;">
+                <div style="margin-bottom: 10px; color: #ffff00;">
+                    ⏳ Command is waiting for input...
+                </div>
+                <div class="flex-row" style="margin-bottom: 10px;">
+                    <input type="text" id="interactiveInput" placeholder="Enter response..." onkeypress="handleInteractiveEnter(event)" style="flex: 1;">
+                    <button onclick="sendInteractiveResponse()">📤 Send</button>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="sendQuickResponse('y')" style="background: #28a745;">✅ Yes (y)</button>
+                    <button onclick="sendQuickResponse('n')" style="background: #dc3545;">❌ No (n)</button>
+                    <button onclick="sendQuickResponse('Y')" style="background: #28a745;">✅ YES (Y)</button>
+                    <button onclick="sendQuickResponse('N')" style="background: #dc3545;">❌ NO (N)</button>
+                    <button onclick="sendQuickResponse('')" style="background: #6c757d;">⏎ Enter</button>
+                    <button onclick="sendQuickResponse('q')" style="background: #fd7e14;">🚪 Quit (q)</button>
+                </div>
+            </div>
+            <div>
+                <button onclick="quickCommand('ls -la')">📁 List Files</button>
+                <button onclick="quickCommand('pwd')">📍 Current Dir</button>
+                <button onclick="quickCommand('whoami')">👤 User Info</button>
+                <button onclick="quickCommand('df -h')">💿 Disk Space</button>
+            </div>
+            <div id="commandOutput" class="output terminal-output">Terminal ready. Type commands above...</div>
+            <div style="font-size: 12px; color: #888; margin-top: 5px;">
+                💡 All command output is displayed. Long outputs are scrollable. Commands timeout after 60 seconds.
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📁 File Storage</h2>
+            <div style="margin-bottom: 15px;">
+                <input type="file" id="fileInput" multiple style="margin: 8px 0;">
+                <div style="display: flex; gap: 10px; margin: 10px 0;">
+                    <button onclick="uploadFiles()">📤 Upload Files</button>
+                    <button onclick="refreshFiles()">🔄 Refresh List</button>
+                    <button onclick="clearOutput('fileOutput')">🗑️ Clear</button>
+                </div>
+                <div id="storageInfo" style="background: #3d3d3d; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 12px;">
+                    Storage: Loading...
+                </div>
+            </div>
+            <div id="fileList" style="max-height: 300px; overflow-y: auto; background: #3d3d3d; border-radius: 4px; padding: 10px; margin: 10px 0;">
+                <div style="text-align: center; color: #888;">Loading files...</div>
+            </div>
+            <div id="fileOutput" class="output">Ready for file operations...</div>
+        </div>
+        
+        <div class="section full-width">
+            <h2>🌐 Public Tunnel Control</h2>
+            <div style="margin-bottom: 20px;">
+                <h3>Choose Your Tunneling Service:</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div style="border: 1px solid #444; padding: 15px; border-radius: 8px;">
+                        <h4 style="color: #ffff00; margin: 0 0 10px 0;">🔧 Ngrok (Traditional)</h4>
+                        <p style="font-size: 12px; margin: 0 0 10px 0;">Requires clicking through warning page</p>
+                        <button onclick="startNgrok()" style="width: 100%; margin-bottom: 5px;">🚀 Start Ngrok</button>
+                        <button onclick="stopNgrok()" class="danger" style="width: 100%;">🛑 Stop Ngrok</button>
+                    </div>
+                    <div style="border: 1px solid #444; padding: 15px; border-radius: 8px;">
+                        <h4 style="color: #00ff00; margin: 0 0 10px 0;">⚡ Localtunnel (No Warnings)</h4>
+                        <p style="font-size: 12px; margin: 0 0 10px 0;">Free, no warning pages, easy setup</p>
+                        <button onclick="startLocaltunnel()" style="width: 100%; margin-bottom: 5px;">🚀 Start Localtunnel</button>
+                        <button onclick="stopLocaltunnel()" class="danger" style="width: 100%;">🛑 Stop Localtunnel</button>
+                    </div>
+                    <div style="border: 1px solid #444; padding: 15px; border-radius: 8px;">
+                        <h4 style="color: #00ccff; margin: 0 0 10px 0;">☁️ Cloudflared (Cloudflare)</h4>
+                        <p style="font-size: 12px; margin: 0 0 10px 0;">Enterprise-grade, very reliable</p>
+                        <button onclick="startCloudflared()" style="width: 100%; margin-bottom: 5px;">🚀 Start Cloudflared</button>
+                        <button onclick="stopCloudflared()" class="danger" style="width: 100%;">🛑 Stop Cloudflared</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                    <button onclick="checkAllTunnelStatus()">🔄 Check All Status</button>
+                    <button onclick="stopAllTunnels()" class="danger">🛑 Stop All Tunnels</button>
+                    <span id="tunnelStatus" style="padding: 8px 15px; border-radius: 4px; background: #444;">Status: No active tunnels</span>
+                </div>
+            </div>
+            <div id="tunnelOutput" class="output">
+                <strong>🌐 Public Tunnel Services:</strong><br>
+                <strong>🔧 Ngrok:</strong> Traditional choice, but has warning page on free tier<br>
+                <strong>⚡ Localtunnel:</strong> No warning pages, simple setup: <code>npm install -g localtunnel</code><br>
+                <strong>☁️ Cloudflared:</strong> Cloudflare's tunnel, very reliable: <code>curl -L cloudflare.com/a/warp | bash</code><br><br>
+                <em style="color: #00ff00;">💡 Recommendation:</em> Try Localtunnel first - it's the easiest with no warnings!<br>
+                Click any "Start" button above to create a public URL that anyone can access.
+            </div>
+        </div>
+        
+        <div class="section full-width">
+            <h2>⚡ Program Management</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>📤 Upload Program</h3>
+                    <div style="margin-bottom: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <label style="margin-right: 10px;">
+                                <input type="radio" name="uploadType" value="single" checked onchange="toggleUploadType()"> Single File
+                            </label>
+                            <label>
+                                <input type="radio" name="uploadType" value="multiple" onchange="toggleUploadType()"> Multiple Files/Project
+                            </label>
+                        </div>
+                        
+                        <!-- Single file upload form -->
+                        <form id="programUploadForm" enctype="multipart/form-data" style="margin-bottom: 15px;">
+                            <input type="file" id="programFile" accept=".py,.sh,.bash,.js,.pl,.rb,*" style="margin-bottom: 10px;" required>
+                            <input type="text" id="programDescription" placeholder="Program description (optional)" style="margin-bottom: 10px;">
+                            <button type="submit">📤 Upload Program</button>
+                        </form>
+                        
+                        <!-- Multiple files upload form -->
+                        <form id="multipleUploadForm" enctype="multipart/form-data" style="margin-bottom: 15px; display: none;">
+                            <input type="file" id="multipleFiles" multiple webkitdirectory style="margin-bottom: 10px; display: none;">
+                            <input type="file" id="multipleFilesRegular" multiple style="margin-bottom: 10px;">
+                            <div style="margin-bottom: 10px;">
+                                <button type="button" onclick="selectFolder()" style="background: #007acc; margin-right: 10px;">📁 Select Folder</button>
+                                <button type="button" onclick="selectMultipleFiles()" style="background: #007acc;">📄 Select Multiple Files</button>
+                            </div>
+                            <input type="text" id="projectName" placeholder="Project name (optional)" style="margin-bottom: 10px;">
+                            <input type="text" id="projectDescription" placeholder="Project description (optional)" style="margin-bottom: 10px;">
+                            <div id="fileList" style="margin-bottom: 10px; max-height: 150px; overflow-y: auto; border: 1px solid #444; padding: 10px; display: none;"></div>
+                            <button type="submit" id="uploadMultipleBtn" disabled>📤 Upload Project</button>
+                        </form>
+                    </div>
+                    <div id="programUploadOutput" class="output">Select a program file to upload...</div>
+                </div>
+                <div>
+                    <h3>📋 Program List</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button onclick="loadProgramList()">🔄 Refresh List</button>
+                        <button onclick="deleteAllPrograms()" class="danger">🗑️ Delete All Programs</button>
+                        <button onclick="deleteSelectedPrograms()" class="danger" id="deleteSelectedBtn" style="display: none;">🗑️ Delete Selected</button>
+                        <button onclick="toggleSelectAll()" id="selectAllBtn" style="background: #007acc;">☑️ Select All</button>
+                    </div>
+                    <div id="programList" class="output" style="max-height: 200px; overflow-y: auto;">Loading programs...</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <h3>▶️ Execute Program</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <select id="selectedProgram" style="flex: 1;" onchange="handleProgramSelection()">
+                        <option value="">Select a program to execute...</option>
+                    </select>
+                    <select id="programExecutionType" style="width: 150px;">
+                        <option value="normal">Normal</option>
+                        <option value="sudo">Root (sudo)</option>
+                    </select>
+                </div>
+                
+                <!-- Terminal Input Section for Projects -->
+                <div id="projectTerminalSection" style="display: none; margin-bottom: 15px; padding: 15px; background: #2d2d2d; border-radius: 6px; border-left: 4px solid #9370db;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <span style="color: #9370db; font-weight: bold;">📁 Project Terminal Mode</span>
+                        <span style="font-size: 11px; color: #888;">(Navigate and run commands in project directory)</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" id="projectTerminalCommand" placeholder="Enter command (e.g., python script.py, ls, cd subdir && python main.py)..." style="flex: 1;" onkeypress="handleProjectTerminalEnter(event)">
+                        <button onclick="executeProjectTerminal()">▶️ Run</button>
+                    </div>
+                    <div style="font-size: 11px; color: #ffff00;">
+                        💡 Tip: Use full commands like "python3 script.py" or "bash install.sh"
+                    </div>
+                </div>
+                
+                <!-- Traditional Arguments Section -->
+                <div id="traditionalArgsSection" style="margin-bottom: 10px;">
+                    <input type="text" id="programArgs" placeholder="Arguments (optional)" style="width: 100%;">
+                </div>
+                
+                <div id="programSudoPassword" style="display: none; margin-bottom: 10px;">
+                    <input type="password" id="programSudoPasswordInput" placeholder="Enter sudo password">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="cursor: pointer; font-size: 12px;">
+                        <input type="checkbox" id="programInteractive">
+                        Run in interactive mode
+                    </label>
+                </div>
+                <button onclick="executeSelectedProgram()">▶️ Execute Program</button>
+                <div id="programExecutionOutput" class="output">Select a program and click execute...</div>
+                <div id="programInteractiveSection" style="display: none; margin-top: 10px;">
+                    <input type="text" id="programInteractiveInput" placeholder="Enter input..." onkeypress="handleProgramInteractiveEnter(event)">
+                    <button onclick="sendProgramInteractiveResponse()">Send</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section full-width">
+            <h2>📈 System Information</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <button onclick="quickCommand('uname -a')">🖥️ System Info</button>
+                <button onclick="quickCommand('ps aux | head -10')">⚡ Top Processes</button>
+                <button onclick="quickCommand('free -h')">🧠 Memory Usage</button>
+                <button onclick="quickCommand('uptime')">⏱️ Uptime</button>
+                <button onclick="quickCommand('ip addr show')">🌐 Network Info</button>
+                <button onclick="quickCommand('lscpu')">🔧 CPU Info</button>
+            </div>
+            <div id="systemOutput" class="output">Click a system info button to see details...</div>
+        </div>
+        
+        <div class="section full-width">
+            <h2>📁 Programs Terminal</h2>
+            <div style="background: #2d2d2d; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 12px;">
+                <span style="color: #9370db;">●</span> Working Directory: <strong id="programsTerminalPath">Loading...</strong>
+                <br>
+                <span style="color: #00ff00;">⚡</span> Persistent terminal session - navigate and run commands in the programs directory
+                <br>
+                <span style="color: #ffff00;">💡</span> All uploaded programs are stored here. Use commands like: <code>ls</code>, <code>cd project_folder</code>, <code>python3 script.py</code>
+            </div>
+            <div class="flex-row">
+                <input type="text" id="programsTerminalCommand" placeholder="Enter command (e.g., ls, cd project_1234/myapp, python3 main.py)..." onkeypress="handleProgramsTerminalEnter(event)">
+                <button onclick="executeProgramsTerminal()">▶️ Execute</button>
+            </div>
+            <div style="margin: 10px 0;">
+                <button onclick="quickProgramsCommand('ls -la')">📁 List All</button>
+                <button onclick="quickProgramsCommand('pwd')">📍 Current Dir</button>
+                <button onclick="quickProgramsCommand('ls -lR')">🗂️ Tree View</button>
+                <button onclick="quickProgramsCommand('du -sh *')">💿 Folder Sizes</button>
+                <button onclick="clearOutput('programsTerminalOutput')">🗑️ Clear</button>
+            </div>
+            <div id="programsTerminalOutput" class="output terminal-output">Programs terminal ready. Type commands above...</div>
+            <div style="font-size: 12px; color: #888; margin-top: 5px;">
+                💡 This terminal stays in the programs directory. Navigate between projects with 'cd'. Use 'cd ..' to go up, 'cd ~' to return to programs root.
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span id="serverStatus">🟢 Server Connected</span> | 
+        <span id="networkInfo">Network Access Enabled</span> |
+        <span id="timestamp"></span>
+    </div>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <title>Backend Dashboard</title>
+            <style>
+                body { font-family: Arial, sans-serif; background: #1a1a1a; color: #e0e0e0; margin:0; }
+                header { background:#2d2d2d; padding:16px; border-bottom:3px solid #007acc; display:flex; align-items:center; justify-content:space-between; }
+                h1 { margin:0; color:#00c7ff; font-size:20px; }
+                main { padding:16px; max-width:1200px; margin:0 auto; display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+                section { background:#2d2d2d; border:1px solid #444; border-radius:8px; padding:16px; }
+                section h2 { color:#00c7ff; margin-top:0; }
+                table { width:100%; border-collapse: collapse; font-size: 13px; }
+                th, td { border-bottom:1px solid #444; padding:6px 8px; text-align:left; }
+                .muted { color:#aaa; font-size:12px; }
+                .mono { font-family: monospace; }
+                .full { grid-column: 1 / -1; }
+                a.button { text-decoration:none; }
+                button { background:#007acc; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; }
+                button:hover { background:#005a9e; }
+            </style>
+        </head>
+        <body>
+            <header>
+                <h1>📈 Backend Dashboard</h1>
+                <div>
+                    <a class="button" href="/" title="Back to Home"><button>🏠 Home</button></a>
+                    <a class="button" href="/metrics" target="_blank" title="Prometheus Metrics"><button>📊 Metrics</button></a>
+                </div>
+            </header>
+            <main>
+                <section>
+                    <h2>Overview</h2>
+                    <div class="muted">Server time: <span id="serverTime">...</span></div>
+                    <ul>
+                        <li>Total programs: <b id="totalPrograms">0</b></li>
+                        <li>Total projects: <b id="totalProjects">0</b></li>
+                        <li>Total files: <b id="totalFiles">0</b></li>
+                        <li>Total size: <b id="totalSize">0</b> bytes</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Storage</h2>
+                    <div class="mono" id="storagePath">storage_path: ...</div>
+                </section>
+                <section>
+                    <h2>System Metrics</h2>
+                    <div class="mono" id="sysSummary">loading...</div>
+                </section>
+                <section>
+                    <h2>Top Endpoints (1h)</h2>
+                    <table id="endpointsTable">
+                        <thead><tr><th>Method</th><th>Path</th><th>Count</th><th>Avg ms</th><th>Err</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </section>
+                <section class="full">
+                    <h2>Recent Programs</h2>
+                    <table id="programsTable">
+                        <thead><tr><th>Type</th><th>Name/ID</th><th>Size</th><th>Exec Count</th><th>Last Executed</th><th>Uploaded</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </section>
+                <section class="full">
+                    <h2>Recent Requests</h2>
+                    <table id="requestsTable">
+                        <thead><tr><th>Time</th><th>Method</th><th>Path</th><th>Status</th><th>Latency (ms)</th><th>Req ID</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </section>
+            </main>
+            <script>
+                async function loadDashboard(){
+                    try{
+                        const res = await fetch('/api/v1/dashboard');
+                        const j = await res.json();
+                        if(!j.success){ throw new Error(j.error||'Error'); }
+                        const d = j.data;
+                        // Overview
+                        document.getElementById('serverTime').textContent = d.server_time;
+                        document.getElementById('totalPrograms').textContent = d.totals.programs;
+                        document.getElementById('totalProjects').textContent = d.totals.projects;
+                        document.getElementById('totalFiles').textContent = d.totals.files;
+                        document.getElementById('totalSize').textContent = d.totals.size_bytes;
+                        // Storage
+                        const sp = d.storage && d.storage.storage_path ? d.storage.storage_path : 'N/A';
+                        document.getElementById('storagePath').textContent = 'storage_path: ' + sp;
+                        // Programs
+                        const pt = document.querySelector('#programsTable tbody');
+                        pt.innerHTML='';
+                        (d.recent_programs||[]).forEach(p=>{
+                            const tr=document.createElement('tr');
+                            const type = p.type || p.program_type || 'program';
+                            const name = p.project_id || p.filename || 'unknown';
+                            const size = (p.total_size!=null)? p.total_size : (p.size!=null? p.size : '');
+                            tr.innerHTML = `<td>${type}</td><td>${name}</td><td>${size}</td><td>${p.execution_count||0}</td><td>${p.last_executed||''}</td><td>${p.upload_time||''}</td>`;
+                            pt.appendChild(tr);
+                        });
+                        // System metrics
+                        const sm = d.system_metrics||{};
+                        const load = (sm.load_average||[]).join(', ');
+                        document.getElementById('sysSummary').textContent =
+                            `CPU: ${sm.cpu_percent||0}% | Mem: ${sm.memory_percent||0}% | Disk: ${sm.disk_usage_percent||0}% | Proc: ${sm.process_count||0} | Load: [${load}]`;
+                        // Endpoints breakdown
+                        const et = document.querySelector('#endpointsTable tbody');
+                        et.innerHTML='';
+                        (d.endpoint_breakdown||[]).forEach(e=>{
+                            const tr=document.createElement('tr');
+                            tr.innerHTML = `<td>${e.method}</td><td class="mono">${e.path}</td><td>${e.count}</td><td>${(e.avg_latency_ms||0).toFixed? (e.avg_latency_ms||0).toFixed(0): e.avg_latency_ms}</td><td>${e.error_count||0}</td>`;
+                            et.appendChild(tr);
+                        });
+                        // Requests
+                        const rt = document.querySelector('#requestsTable tbody');
+                        rt.innerHTML='';
+                        (d.recent_requests||[]).slice().reverse().forEach(r=>{
+                            const tr=document.createElement('tr');
+                            const ts = r.timestamp ? new Date(r.timestamp) : new Date();
+                            tr.innerHTML = `<td>${ts.toLocaleTimeString()}</td><td>${r.method}</td><td>${r.path}</td><td>${r.status}</td><td>${r.latency_ms}</td><td class="mono">${r.request_id||''}</td>`;
+                            rt.appendChild(tr);
+                        });
+                    }catch(e){ console.error(e); }
+                }
+                loadDashboard();
+                setInterval(loadDashboard, 5000);
+            </script>
+        </body>
+        </html>

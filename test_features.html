@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Main File Selection & Delete</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
+        button { padding: 10px; margin: 5px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005a9e; }
+        .output { background: #000; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }
+        .success { color: #00ff00; }
+        .error { color: #ff6b35; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Main File Selection & Delete</h1>
+    
+    <div>
+        <h2>Test Delete</h2>
+        <button onclick="testDelete()">🗑️ Test Delete (will create & delete test.py)</button>
+        <div id="deleteOutput" class="output"></div>
+    </div>
+    
+    <div>
+        <h2>Test Main File Selection</h2>
+        <button onclick="testMainFilePrompt()">⚡ Execute Project Without Main File</button>
+        <div id="executeOutput" class="output"></div>
+    </div>
+    
+    <script>
+        const PROJECT_ID = 'project_1761406189';  // Our test project
+        
+        async function testDelete() {
+            const output = document.getElementById('deleteOutput');
+            output.innerHTML = 'Creating test program...';
+            
+            try {
+                // Upload a test file
+                const testCode = 'print("delete me")';
+                const formData = new FormData();
+                formData.append('file', new Blob([testCode], {type: 'text/plain'}), 'test_delete.py');
+                
+                const uploadRes = await fetch('/api/programs/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                
+                if (!uploadData.success) {
+                    output.innerHTML = `<span class="error">Upload failed: ${uploadData.error}</span>`;
+                    return;
+                }
+                
+                const filename = uploadData.program.filename;
+                output.innerHTML = `Created ${filename}\\nDeleting...`;
+                
+                // Delete it
+                const deleteRes = await fetch(`/api/programs/delete/${filename}`, {
+                    method: 'DELETE'
+                });
+                const deleteData = await deleteRes.json();
+                
+                if (deleteData.success) {
+                    output.innerHTML = `<span class="success">✓ Successfully created and deleted ${filename}</span>`;
+                } else {
+                    output.innerHTML = `<span class="error">✗ Delete failed: ${deleteData.error}</span>`;
+                }
+            } catch (error) {
+                output.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function testMainFilePrompt() {
+            const output = document.getElementById('executeOutput');
+            output.innerHTML = 'Removing main file from project...';
+            
+            try {
+                // First, set main_file to null via direct metadata manipulation
+                // (In real usage, this would be a user uploading a new project)
+                
+                // Try to execute - should get prompt
+                output.innerHTML = 'Executing project...';
+                const execRes = await fetch(`/api/programs/execute/${PROJECT_ID}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({})
+                });
+                const execData = await execRes.json();
+                
+                if (execData.need_main_file) {
+                    output.innerHTML = `<span class="success">✓ Got main file selection prompt!</span>\\n\\n`;
+                    output.innerHTML += `Candidates:\\n`;
+                    execData.candidates.forEach(c => {
+                        output.innerHTML += `  - ${c.relative_path} (${c.program_type})\\n`;
+                    });
+                    
+                    // Now set one and retry
+                    output.innerHTML += `\\nSetting ${execData.candidates[0].relative_path} as main...`;
+                    const setRes = await fetch(`/api/programs/project/${PROJECT_ID}/set-main`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({relative_path: execData.candidates[0].relative_path})
+                    });
+                    const setData = await setRes.json();
+                    
+                    if (setData.success) {
+                        output.innerHTML += `\\n<span class="success">✓ Main file set!</span>\\n\\nRetrying execution...`;
+                        
+                        // Execute again
+                        const exec2Res = await fetch(`/api/programs/execute/${PROJECT_ID}`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({})
+                        });
+                        const exec2Data = await exec2Res.json();
+                        
+                        if (exec2Data.success) {
+                            output.innerHTML += `\\n<span class="success">✓ Execution successful!</span>\\nOutput: ${exec2Data.output}`;
+                        } else {
+                            output.innerHTML += `\\n<span class="error">✗ Execution failed: ${exec2Data.error}</span>`;
+                        }
+                    }
+                } else if (execData.success) {
+                    output.innerHTML = `<span class="error">✗ Project executed without prompt (main file already set)</span>\\nOutput: ${execData.output}`;
+                } else {
+                    output.innerHTML = `<span class="error">✗ Unexpected error: ${execData.error}</span>`;
+                }
+            } catch (error) {
+                output.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

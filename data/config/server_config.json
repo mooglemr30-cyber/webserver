@@ -1,0 +1,82 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "debug": true,
+    "secret_key": "faf9662d3e824fedb5cc75e5b9d3d18c558efc39b9d01251e0c2f1b49044bae8",
+    "max_content_length": 104857600,
+    "session_timeout": 7200,
+    "cleanup_interval": 3600
+  },
+  "security": {
+    "rate_limiting_enabled": true,
+    "csrf_protection_enabled": true,
+    "authentication_required": false,
+    "secure_headers_enabled": true,
+    "input_validation_strict": true,
+    "file_upload_scanning": true,
+    "command_whitelist_enabled": false,
+    "session_ip_validation": false
+  },
+  "storage": {
+    "max_file_size": 104857600,
+    "max_total_storage": 5368709120,
+    "allowed_file_types": [
+      "text/*",
+      "image/*",
+      "application/pdf",
+      "application/json",
+      "application/xml",
+      "application/zip",
+      "application/tar"
+    ],
+    "cleanup_old_files_days": 30,
+    "enable_file_versioning": false,
+    "enable_file_encryption": false
+  },
+  "tunnels": {
+    "ngrok": {
+      "enabled": true,
+      "config_path": "ngrok.yml",
+      "default_subdomain": null,
+      "auth_token_required": true
+    },
+    "localtunnel": {
+      "enabled": true,
+      "subdomain_prefix": "webserver",
+      "custom_host": null
+    },
+    "cloudflared": {
+      "enabled": true,
+      "config_path": null,
+      "tunnel_name": null
+    },
+    "auto_start": false,
+    "preferred_service": "localtunnel"
+  },
+  "logging": {
+    "level": "INFO",
+    "max_file_size": 10485760,
+    "backup_count": 5,
+    "log_to_file": true,
+    "log_to_console": true,
+    "security_logging": true,
+    "audit_logging": true
+  },
+  "performance": {
+    "enable_caching": true,
+    "cache_timeout": 300,
+    "enable_compression": true,
+    "enable_async": false,
+    "max_workers": 4
+  },
+  "maintenance": {
+    "backup_enabled": true,
+    "backup_interval_hours": 24,
+    "backup_retention_days": 7,
+    "auto_cleanup_enabled": true,
+    "metrics_collection": true
+  },
+  "created_at": "2025-10-26T01:17:42.035908",
+  "version": "2.0.0"
+}

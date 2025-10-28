@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # Main application
+  webserver:
+    build:
+      context: ../../
+      dockerfile: production/docker/Dockerfile.production
+    ports:
+      - "8000:8000"
+      - "9090:9090"  # Metrics port
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key}
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///data/production.db
+      - LOG_LEVEL=INFO
+      - METRICS_ENABLED=true
+      - BACKUP_ENABLED=true
+      - ENABLE_COMMAND_EXECUTION=false
+      - FORCE_HTTPS=false  # Set to true with proper SSL setup
+    volumes:
+      - webserver_data:/app/data
+      - webserver_logs:/var/log/webserver
+      - webserver_backups:/var/backups/webserver
+      - webserver_uploads:/var/data/uploads
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      - webserver_network
+
+  # Redis cache and session store
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    sysctls:
+      - net.core.somaxconn=1024
+    networks:
+      - webserver_network
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - webserver
+    restart: unless-stopped
+    networks:
+      - webserver_network
+
+  # Prometheus monitoring (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - webserver_network
+
+  # Grafana dashboard (optional)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - webserver_network
+
+volumes:
+  webserver_data:
+    driver: local
+  webserver_logs:
+    driver: local
+  webserver_backups:
+    driver: local
+  webserver_uploads:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  webserver_network:
+    driver: bridge

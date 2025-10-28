@@ -1,0 +1,9 @@
+[
+  {
+    "execution_id": "b862d1af77d2274f",
+    "agent_id": "test-agent",
+    "command": "sudo -S whoami",
+    "timestamp": "2025-10-28T13:43:24.990399",
+    "ip": "localhost"
+  }
+]
