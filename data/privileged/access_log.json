@@ -5,5 +5,54 @@
     "command": "sudo -S whoami",
     "timestamp": "2025-10-28T13:43:24.990399",
     "ip": "localhost"
+  },
+  {
+    "execution_id": "4fab7317819c20cf",
+    "agent_id": "service-tester",
+    "command": "sudo -S whoami",
+    "timestamp": "2025-10-28T16:44:32.204067",
+    "ip": "localhost"
+  },
+  {
+    "execution_id": "6d1dfa9ac1011f9a",
+    "agent_id": "test",
+    "command": "sudo -S whoami",
+    "timestamp": "2025-10-28T16:44:58.274498",
+    "ip": "localhost"
+  },
+  {
+    "execution_id": "fa5849708ed1af94",
+    "agent_id": "service-tester",
+    "command": "echo 'admin' | sudo -S whoami",
+    "timestamp": "2025-10-28T16:50:43.031210",
+    "ip": "localhost"
+  },
+  {
+    "execution_id": "92d7ad5b2b9d2d39",
+    "agent_id": "verify_local",
+    "command": "echo 'admin' | sudo -S hostname && whoami && pwd",
+    "timestamp": "2025-10-28T16:56:01.042566",
+    "ip": "localhost"
+  },
+  {
+    "execution_id": "78b7903e2808478b",
+    "agent_id": "verify_local",
+    "command": "echo 'admin' | sudo -S hostname && whoami && pwd",
+    "timestamp": "2025-10-28T16:56:07.590555",
+    "ip": "localhost"
+  },
+  {
+    "execution_id": "eb6635f6bbfe99d2",
+    "agent_id": "system_check",
+    "command": "echo 'admin' | sudo -S uname -a",
+    "timestamp": "2025-10-28T16:56:15.203185",
+    "ip": "localhost"
+  },
+  {
+    "execution_id": "7d7c81f5d94c87b4",
+    "agent_id": "status_check",
+    "command": "echo 'admin' | sudo -S echo test",
+    "timestamp": "2025-10-28T19:15:08.526834",
+    "ip": "localhost"
   }
 ]

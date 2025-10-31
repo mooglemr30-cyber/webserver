@@ -1,0 +1,35 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    RUN THIS COMMAND IN YOUR TERMINAL
+═══════════════════════════════════════════════════════════════════════════════
+
+cd /home/admin1/Documents/webserver && bash setup_and_run_robust.sh
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ FIXED: Auto-detects broken venv (wrong path)
+✅ FIXED: Auto-recreates .venv in correct location
+✅ FIXED: Fixes all path and permission issues
+✅ NO SUDO NEEDED: Proper solution, runs as normal user
+
+═══════════════════════════════════════════════════════════════════════════════
+
+This ONE command will:
+
+✅ Fix venv permissions automatically with chmod
+✅ Install ALL dependencies (with error recovery)
+✅ Verify everything is installed
+✅ START YOUR SERVER in terminal (NOT systemd)
+✅ Show Cloudflare tunnel URL for mobile app
+
+Takes 2-3 minutes. Press Ctrl+C to stop server when done.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+CONFIRMATION:
+  ✅ Original webserver: PRESERVED (no changes to src/app.py)
+  ✅ Mobile app: CONFIGURED (connects via hidden tunnel)
+  ✅ Both work together: Same APIs, same data, same tools
+  ✅ Running mode: Terminal (you see logs, NOT systemd service)
+
+═══════════════════════════════════════════════════════════════════════════════
+

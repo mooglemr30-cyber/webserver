@@ -1940,3 +1940,175 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ===================================
+// Mobile App Tunnel Control Functions
+// ===================================
+
+async function startMobileTunnel() {
+    const outputDiv = document.getElementById('mobileAppOutput');
+    const startBtn = document.getElementById('startMobileTunnelBtn');
+    const stopBtn = document.getElementById('stopMobileTunnelBtn');
+
+    try {
+        startBtn.disabled = true;
+        startBtn.innerHTML = '⏳ Starting...';
+        outputDiv.innerHTML = '<span style="color: #ffff00;">Starting mobile tunnel...</span>';
+
+        const result = await safeFetchJSON('/api/mobile/tunnel/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (result.success) {
+            updateMobileTunnelStatus(true, result.data.url);
+            outputDiv.innerHTML = `<span style="color: #00ff00;">✅ Mobile tunnel started successfully!</span><br>
+                <strong>Tunnel URL:</strong> <a href="${result.data.url}" target="_blank" style="color: #4fc3f7;">${result.data.url}</a><br>
+                <span style="color: #e0e0e0;">Use this URL in your mobile app to connect remotely.</span>`;
+        } else {
+            outputDiv.innerHTML = `<span style="color: #ff6b35;">❌ Failed to start tunnel: ${result.error || 'Unknown error'}</span>`;
+            startBtn.disabled = false;
+            startBtn.innerHTML = '▶️ Start Tunnel';
+        }
+    } catch (error) {
+        outputDiv.innerHTML = `<span style="color: #ff6b35;">❌ Error: ${error.message}</span>`;
+        startBtn.disabled = false;
+        startBtn.innerHTML = '▶️ Start Tunnel';
+    }
+}
+
+async function stopMobileTunnel() {
+    const outputDiv = document.getElementById('mobileAppOutput');
+    const startBtn = document.getElementById('startMobileTunnelBtn');
+    const stopBtn = document.getElementById('stopMobileTunnelBtn');
+
+    try {
+        stopBtn.disabled = true;
+        stopBtn.innerHTML = '⏳ Stopping...';
+        outputDiv.innerHTML = '<span style="color: #ffff00;">Stopping mobile tunnel...</span>';
+
+        const result = await safeFetchJSON('/api/mobile/tunnel/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (result.success) {
+            updateMobileTunnelStatus(false, '');
+            outputDiv.innerHTML = '<span style="color: #888;">Mobile tunnel stopped. Using local connection only.</span>';
+        } else {
+            outputDiv.innerHTML = `<span style="color: #ff6b35;">❌ Failed to stop tunnel: ${result.error || 'Unknown error'}</span>`;
+            stopBtn.disabled = false;
+            stopBtn.innerHTML = '⏹ Stop Tunnel';
+        }
+    } catch (error) {
+        outputDiv.innerHTML = `<span style="color: #ff6b35;">❌ Error: ${error.message}</span>`;
+        stopBtn.disabled = false;
+        stopBtn.innerHTML = '⏹ Stop Tunnel';
+    }
+}
+
+async function checkMobileTunnelStatus() {
+    const outputDiv = document.getElementById('mobileAppOutput');
+
+    try {
+        outputDiv.innerHTML = '<span style="color: #ffff00;">Checking tunnel status...</span>';
+
+        const result = await safeFetchJSON('/api/mobile/tunnel/status', {
+            method: 'GET'
+        });
+
+        if (result.success && result.data) {
+            const isRunning = result.data.running || false;
+            const url = result.data.url || '';
+
+            updateMobileTunnelStatus(isRunning, url);
+
+            if (isRunning) {
+                outputDiv.innerHTML = `<span style="color: #00ff00;">✅ Tunnel is running</span><br>
+                    <strong>URL:</strong> <a href="${url}" target="_blank" style="color: #4fc3f7;">${url}</a>`;
+            } else {
+                outputDiv.innerHTML = '<span style="color: #888;">Tunnel is stopped. Local connection only.</span>';
+            }
+        } else {
+            outputDiv.innerHTML = `<span style="color: #ff6b35;">Failed to get status: ${result.error || 'Unknown error'}</span>`;
+        }
+    } catch (error) {
+        outputDiv.innerHTML = `<span style="color: #ff6b35;">Error: ${error.message}</span>`;
+    }
+}
+
+function updateMobileTunnelStatus(isRunning, url) {
+    const statusDot = document.getElementById('tunnelStatusDot');
+    const statusText = document.getElementById('tunnelStatusText');
+    const urlDiv = document.getElementById('mobileTunnelUrl');
+    const urlLink = document.getElementById('tunnelUrlLink');
+    const startBtn = document.getElementById('startMobileTunnelBtn');
+    const stopBtn = document.getElementById('stopMobileTunnelBtn');
+
+    if (isRunning) {
+        statusDot.style.background = '#34c759';
+        statusText.textContent = 'Tunnel: Running';
+        startBtn.disabled = true;
+        startBtn.innerHTML = '▶️ Start Tunnel';
+        stopBtn.disabled = false;
+        stopBtn.innerHTML = '⏹ Stop Tunnel';
+
+        if (url) {
+            urlDiv.style.display = 'block';
+            urlLink.href = url;
+            urlLink.textContent = url;
+        }
+    } else {
+        statusDot.style.background = '#ff3b30';
+        statusText.textContent = 'Tunnel: Stopped';
+        startBtn.disabled = false;
+        startBtn.innerHTML = '▶️ Start Tunnel';
+        stopBtn.disabled = true;
+        stopBtn.innerHTML = '⏹ Stop Tunnel';
+        urlDiv.style.display = 'none';
+    }
+}
+
+async function downloadAPK() {
+    const outputDiv = document.getElementById('mobileAppOutput');
+
+    // Check if APK exists
+    try {
+        const response = await fetch('/static/webserver-mobile.apk', { method: 'HEAD' });
+
+        if (response.ok) {
+            // APK exists, start download
+            outputDiv.innerHTML = '<span style="color: #00ff00;">✅ Downloading APK...</span>';
+            window.location.href = '/static/webserver-mobile.apk';
+
+            setTimeout(() => {
+                outputDiv.innerHTML = '<span style="color: #00ff00;">✅ APK download started! Check your downloads folder.</span>';
+            }, 1000);
+        } else {
+            // APK doesn't exist, show build instructions
+            outputDiv.innerHTML = `<span style="color: #ffff00;">⚠️ APK not built yet!</span><br><br>
+                <strong>To build the mobile app APK:</strong><br>
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; margin-top: 10px; text-align: left;">
+                <code style="display: block; margin: 5px 0;">cd mobile-app</code>
+                <code style="display: block; margin: 5px 0;">npm install</code>
+                <code style="display: block; margin: 5px 0;">npm install -g expo-cli</code>
+                <code style="display: block; margin: 5px 0;">expo build:android</code>
+                </div><br>
+                <span style="color: #e0e0e0;">Or use EAS Build:</span><br>
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; margin-top: 10px; text-align: left;">
+                <code style="display: block; margin: 5px 0;">npm install -g eas-cli</code>
+                <code style="display: block; margin: 5px 0;">eas build --platform android</code>
+                <code style="display: block; margin: 5px 0;">eas build:download</code>
+                </div><br>
+                <span style="color: #e0e0e0;">Once built, place the APK file in: <code>src/static/webserver-mobile.apk</code></span>`;
+        }
+    } catch (error) {
+        outputDiv.innerHTML = `<span style="color: #ff6b35;">Error checking for APK: ${error.message}</span>`;
+    }
+}
+
+// Initialize mobile tunnel status on page load
+window.addEventListener('load', () => {
+    checkMobileTunnelStatus();
+});
+

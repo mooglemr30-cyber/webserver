@@ -1,0 +1,29 @@
+══════════════════════════════════════════════════════════════════════
+   MISSING DEPENDENCIES - RUN THIS FIX COMMAND
+══════════════════════════════════════════════════════════════════════
+
+cd /home/admin1/Documents/webserver && chmod +x fix_dependencies.sh && bash fix_dependencies.sh
+
+══════════════════════════════════════════════════════════════════════
+
+This will:
+  • Install flask-cors (MISSING)
+  • Install pydantic (MISSING)
+  • Install all 16 other dependencies
+  • Run tests again
+  • Confirm everything works
+
+Takes 2-3 minutes.
+
+══════════════════════════════════════════════════════════════════════
+
+
+WHAT HAPPENED:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Virtual environment was created ✓
+But not all dependencies installed properly ✗
+
+The fix command above will complete the installation.
+
+══════════════════════════════════════════════════════════════════════
+

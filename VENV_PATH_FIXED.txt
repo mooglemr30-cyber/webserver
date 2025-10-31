@@ -1,0 +1,93 @@
+╔══════════════════════════════════════════════════════════════╗
+║         BROKEN VENV PATH FIXED - AUTO-RECREATE               ║
+╚══════════════════════════════════════════════════════════════╝
+
+THE PROBLEM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your .venv folder was copied from another location:
+  /run/media/admin1/1E1EC1FE1EC1CF491/to delete/webserver/
+
+The virtual environment has hardcoded paths inside it that point to
+the OLD location. This can't be fixed - it must be recreated.
+
+
+THE SOLUTION (AUTOMATIC):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+I've updated BOTH scripts to automatically:
+1. Check if .venv/bin/python works
+2. If it fails (wrong path), delete the broken .venv
+3. Create a brand new .venv in the correct location
+4. Install all dependencies fresh
+
+
+RUN THIS COMMAND:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && bash setup_and_run_robust.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+WHAT WILL HAPPEN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 2: Virtual Environment
+Checking existing virtual environment...
+⚠ Virtual environment is broken (wrong path from old location)
+Removing broken virtual environment...
+Creating new virtual environment...
+✓ Created .venv                        ← Fresh venv with correct path!
+Fixing permissions on virtual environment...
+✓ Permissions fixed
+
+Step 3: Upgrading pip
+✓ pip upgraded                         ← Works now!
+
+Step 4: Installing Dependencies
+✓ All packages installed               ← Fresh install!
+
+[...continues to server startup...]
+
+
+WHY THIS HAPPENED:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Virtual environments contain absolute paths. When you:
+1. Create .venv at location A
+2. Copy entire folder to location B
+3. Try to use .venv at location B
+
+The .venv still points to location A (hardcoded inside scripts).
+
+SOLUTION: Always recreate .venv after moving/copying folders.
+
+
+SCRIPTS UPDATED:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ setup_and_run.sh - Auto-detects and recreates broken venv
+✅ setup_and_run_robust.sh - Auto-detects and recreates broken venv
+
+
+CONFIRMATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Original webserver: PRESERVED
+✅ Mobile app: CONFIGURED (hidden tunnel)
+✅ Broken venv: WILL BE RECREATED AUTOMATICALLY
+✅ Correct path: /home/admin1/Documents/webserver/.venv
+✅ Fresh install: All dependencies will be reinstalled
+
+
+COPY THIS COMMAND:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && bash setup_and_run_robust.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The script will automatically detect the broken venv, delete it,
+and create a fresh one with the correct path. Takes ~3 minutes total.
+

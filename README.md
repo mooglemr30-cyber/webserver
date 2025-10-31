@@ -19,6 +19,7 @@
 - **Command Execution** - Interactive and non-interactive command execution with sudo support
 - **Voice Chat** - WebRTC-based voice communication with persistent rooms
 - **Web Interface** - Modern UI for all features with drag-and-drop support
+- **📱 Mobile App** - React Native app with secure hidden tunnel access (NEW!)
 
 ### Advanced Features
 - **Multi-Tunnel Support** - Ngrok, Localtunnel, Cloudflared for public access
@@ -34,6 +35,7 @@
 ### Getting Started
 - **[INSTALL.md](INSTALL.md)** - **Complete installation guide with automated scripts**
 - **[GETTING_STARTED.md](docs/GETTING_STARTED.md)** - Installation and quick start guide
+- **[📱 MOBILE_APP_SETUP.md](MOBILE_APP_SETUP.md)** - **Mobile app setup with hidden tunnel (NEW!)**
 - **[QUICK_START.md](QUICK_START.md)** - Fast setup for impatient users
 
 ### Technical Documentation
@@ -198,6 +200,14 @@ GET    /health                 # Health check
 GET    /metrics                # Prometheus metrics
 GET    /dashboard              # Dashboard UI
 GET    /api/docs               # API documentation (Swagger)
+### Mobile Access (NEW!)
+```bash
+POST   /api/mobile/tunnel/start    # Start hidden tunnel
+POST   /api/mobile/tunnel/stop     # Stop tunnel
+GET    /api/mobile/tunnel/status   # Get tunnel status
+GET    /api/mobile/config          # Get mobile configuration
+```
+
 ```
 
 **Complete API Reference**: See [API_REFERENCE.md](docs/API_REFERENCE.md)

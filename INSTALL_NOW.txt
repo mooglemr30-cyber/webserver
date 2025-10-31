@@ -1,0 +1,78 @@
+╔══════════════════════════════════════════════════════════════╗
+║                   INSTALL DEPENDENCIES NOW                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+STEP 1: INSTALL DEPENDENCIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Copy and paste this command:
+
+cd /home/admin1/Documents/webserver && pip3 install --user -r requirements.txt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Wait for it to finish (may take 2-3 minutes).
+You'll see: "Successfully installed flask-2.3.3 ..."
+
+
+STEP 2: RUN THE TESTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After dependencies install, run:
+
+cd /home/admin1/Documents/webserver && python3 comprehensive_test.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+ALTERNATIVE: ONE COMMAND TO DO BOTH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && pip3 install --user -r requirements.txt && python3 comprehensive_test.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+WHAT GETS INSTALLED:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Essential:
+  • flask - Web framework (REQUIRED)
+  • flask-cors - Cross-origin support (REQUIRED)
+  • requests - HTTP library
+  • Werkzeug - Web utilities
+
+Additional:
+  • cryptography - Security
+  • pexpect - Terminal automation
+  • flask-limiter - Rate limiting
+  • And 10 more packages...
+
+All from requirements.txt file.
+
+
+IF YOU GET ERRORS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Error: "Permission denied"
+Solution: Already using --user flag, so this shouldn't happen.
+
+Error: "pip3: command not found"
+Solution: Install pip first:
+  sudo apt-get update
+  sudo apt-get install python3-pip
+
+Error: "Python.h: No such file"
+Solution: Install Python dev tools:
+  sudo apt-get install python3-dev build-essential
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+COPY THIS COMMAND NOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && pip3 install --user -r requirements.txt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

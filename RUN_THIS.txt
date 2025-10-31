@@ -1,0 +1,57 @@
+╔══════════════════════════════════════════════════════════════╗
+║         🎯 RUN THIS COMMAND (FIXED PROJECT ID!)             ║
+╚══════════════════════════════════════════════════════════════╝
+
+cd /home/admin1/Documents/webserver && chmod +x fix_and_build.sh && bash fix_and_build.sh
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                    WHAT IT DOES                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+✅ Fixes the EAS project ID error
+✅ Configures EAS with proper UUID
+✅ Submits build to cloud
+✅ Gives you APK download link
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                    WHAT YOU'LL SEE                           ║
+╚══════════════════════════════════════════════════════════════╝
+
+"Configuring EAS project..." → Wait a moment
+"Starting build..." → Build submits
+"Build URL: https://expo.dev/..." → Success!
+
+
+╔══════════════════════════════════════════════════════════════╗
+
+EAS Build requires an Expo account (free at expo.dev)
+
+Steps:
+1. This will open a browser for you to login
+2. The build will happen in the cloud
+3. You'll get a download link when done
+
+Press Enter to continue...
+Using local EAS CLI installation...
+
+Starting EAS build for Android...
+This will open a browser for login...
+An Expo user account is required to proceed.
+
+Log in to EAS with email or username (exit and run eas login --help to see other login options)
+✔ Email or username … mooglemr30@gmail.com
+✔ Password … ***********
+Found eas-cli in your project dependencies.
+It's recommended to use the "cli.version" field in eas.json to enforce the eas-cli version for your project.
+Learn more: https://github.com/expo/eas-cli#enforcing-eas-cli-version-for-your-project
+
+Invalid UUID appId
+Request ID: 636dde62-c08f-4f83-bf90-17ec33d1d51a
+    Error: GraphQL request failed.
+║                    THAT'S IT! 🎉                             ║
+╚══════════════════════════════════════════════════════════════╝
+
+No sudo. No passwords. Just paste and go!
+

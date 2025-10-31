@@ -1,0 +1,66 @@
+DEPENDENCIES FROM requirements.txt
+═══════════════════════════════════════════════════════════════
+
+1. flask==2.3.3                  ← MAIN WEB FRAMEWORK (REQUIRED!)
+2. flask-cors==4.0.0              ← Cross-origin support (REQUIRED!)
+3. Werkzeug==2.3.7                ← Web utilities
+4. requests==2.31.0               ← HTTP library
+5. prometheus-client==0.20.0      ← Metrics
+6. pydantic==1.10.15              ← Data validation
+7. pexpect==4.8.0                 ← Terminal automation
+8. flask-limiter==3.5.0           ← Rate limiting
+9. cryptography==41.0.7           ← Security
+10. bleach==6.1.0                 ← HTML sanitization
+11. python-magic==0.4.27          ← File type detection
+12. redis==5.0.1                  ← Caching
+13. flask-socketio==5.3.6         ← WebSocket support
+14. eventlet==0.33.3              ← Async networking
+15. aiofiles==23.2.1              ← Async file operations
+16. schedule==1.2.0               ← Job scheduling
+17. PyYAML==6.0.1                 ← YAML configuration
+18. psutil==5.9.6                 ← System monitoring
+
+
+FOR UBUNTU/DEBIAN (Externally Managed Python):
+═══════════════════════════════════════════════════════════════
+
+You MUST use a virtual environment. Copy these commands:
+
+
+OPTION 1: AUTOMATED SETUP (EASIEST - RECOMMENDED)
+═══════════════════════════════════════════════════════════════
+
+cd /home/admin1/Documents/webserver && chmod +x setup_and_test.sh && bash setup_and_test.sh
+
+
+OPTION 2: MANUAL SETUP (Step by step)
+═══════════════════════════════════════════════════════════════
+
+Step 1 - Create virtual environment:
+  cd /home/admin1/Documents/webserver
+  python3 -m venv .venv
+
+Step 2 - Activate virtual environment:
+  source .venv/bin/activate
+
+Step 3 - Install dependencies:
+  pip install -r requirements.txt
+
+Step 4 - Run tests:
+  python3 comprehensive_test.py
+
+
+OPTION 3: ONE-LINE COMMAND
+═══════════════════════════════════════════════════════════════
+
+cd /home/admin1/Documents/webserver && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python3 comprehensive_test.py
+
+
+WHY VIRTUAL ENVIRONMENT?
+═══════════════════════════════════════════════════════════════
+
+Ubuntu/Debian now requires virtual environments to prevent conflicts
+with system Python packages. The .venv folder keeps everything isolated.
+
+═══════════════════════════════════════════════════════════════
+

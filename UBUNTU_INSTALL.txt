@@ -1,0 +1,76 @@
+╔══════════════════════════════════════════════════════════════╗
+║           UBUNTU/DEBIAN - USE VIRTUAL ENVIRONMENT            ║
+╚══════════════════════════════════════════════════════════════╝
+
+YOUR SYSTEM REQUIRES A VIRTUAL ENVIRONMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ubuntu/Debian blocks direct pip3 install to protect system Python.
+You must use a virtual environment (.venv folder).
+
+
+THE EASIEST WAY - ONE COMMAND:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Copy and paste this:
+
+cd /home/admin1/Documents/webserver && chmod +x setup_and_test.sh && bash setup_and_test.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This will:
+  1. Create virtual environment (.venv)
+  2. Install all dependencies
+  3. Run all tests
+  4. Show you the results
+
+
+WHAT HAPPENS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Creating new virtual environment...
+✓ Virtual environment created at .venv
+
+Activating virtual environment...
+Upgrading pip...
+Installing dependencies from requirements.txt...
+
+Collecting flask==2.3.3...
+Successfully installed flask-2.3.3 flask-cors-4.0.0 ...
+
+Now running tests...
+✓ ALL CRITICAL TESTS PASSED
+
+
+FUTURE USE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After first setup, activate virtual environment with:
+
+  cd /home/admin1/Documents/webserver
+  source .venv/bin/activate
+
+Then you can run:
+  python src/app.py          (start webserver)
+  python3 comprehensive_test.py  (run tests)
+
+To deactivate:
+  deactivate
+
+
+CONFIRMATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Original webserver: PRESERVED (no changes)
+✅ Mobile app: CONFIGURED (via tunnel)
+✅ Dependencies: Will be installed in .venv (isolated)
+✅ System Python: NOT affected
+✅ Both services: Work together
+
+
+COPY THIS COMMAND NOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && chmod +x setup_and_test.sh && bash setup_and_test.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

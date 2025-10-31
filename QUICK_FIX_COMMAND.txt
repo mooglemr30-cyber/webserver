@@ -1,0 +1,25 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    FIX MISSING PyJWT AND START SERVER
+═══════════════════════════════════════════════════════════════════════════════
+
+COPY THIS COMMAND (QUICK FIX - 10 SECONDS):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && chmod +x install_missing_and_run.sh && bash install_missing_and_run.sh
+
+═══════════════════════════════════════════════════════════════════════════════
+
+THIS WILL:
+  ✅ Install PyJWT and bcrypt packages (fixes the errors)
+  ✅ Start your webserver immediately
+  ✅ Show Cloudflare tunnel URL for mobile app
+
+ABOUT THE REDIS WARNING:
+  ℹ️  "Redis connection failed" is NORMAL and HARMLESS
+  ℹ️  Server uses memory cache instead (works perfectly)
+  ℹ️  You can safely ignore this warning
+
+TAKES: 10 seconds total
+
+═══════════════════════════════════════════════════════════════════════════════
+

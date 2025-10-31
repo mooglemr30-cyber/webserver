@@ -17,7 +17,7 @@ def test_sudo_whoami():
         
         if index == 0:  # Password prompt found
             print("Password prompt detected")
-            child.sendline('Casper@0302')
+            child.sendline('admin')
             print("Password sent")
             
             # Wait for command to complete

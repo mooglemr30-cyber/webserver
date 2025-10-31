@@ -1,0 +1,24 @@
+# Minimal requirements for webserver to run
+# Core packages only - install these first
+
+flask>=2.3.3
+flask-cors>=4.0.0
+Werkzeug>=2.3.7
+requests>=2.31.0
+pydantic>=1.10.15
+pexpect>=4.8.0
+psutil>=5.9.6
+
+# Optional packages (install if needed)
+# prometheus-client>=0.20.0
+# flask-limiter>=3.5.0
+# cryptography>=41.0.7
+# bleach>=6.1.0
+# python-magic>=0.4.27
+# redis>=5.0.1
+# flask-socketio>=5.3.6
+# eventlet>=0.33.3
+# aiofiles>=23.2.1
+# schedule>=1.2.0
+# PyYAML>=6.0.1
+

@@ -2674,5 +2674,27 @@
     "execution_count": 0,
     "last_executed": null,
     "history": []
+  },
+  "program_1761632542": {
+    "program_id": "program_1761632542",
+    "filename": "test_upload.sh",
+    "original_filename": "test_upload.sh",
+    "description": "Test upload script",
+    "program_type": "shell",
+    "type": "single",
+    "size": 56,
+    "upload_time": "2025-10-28T19:22:22.977837",
+    "execution_count": 2,
+    "last_executed": "2025-10-29T05:44:56.191976",
+    "history": [
+      {
+        "timestamp": "2025-10-29T05:44:56.191976",
+        "success": true,
+        "exit_code": 0,
+        "duration_ms": 14,
+        "command": "bash /run/media/admin1/1E1EC1FE1EC1CF491/to delete/webserver/data/programs/program_1761632542/test_upload.sh",
+        "output_size": 62
+      }
+    ]
   }
 }

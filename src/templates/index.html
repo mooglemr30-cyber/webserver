@@ -20,6 +20,64 @@
     </div>
     
     <div class="container">
+        <!-- Mobile App Controls Section -->
+        <div class="section full-width" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border: 2px solid #4a90e2;">
+            <h2 style="color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">📱 Mobile App Controls</h2>
+            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Tunnel Control -->
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;">
+                        <h3 style="color: #fff; margin-top: 0;">🔒 Secure Tunnel for Mobile</h3>
+                        <div id="mobileTunnelStatus" style="padding: 10px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-bottom: 15px; color: #fff;">
+                            <span id="tunnelStatusDot" style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #ff3b30; margin-right: 8px;"></span>
+                            <span id="tunnelStatusText">Tunnel: Stopped</span>
+                        </div>
+                        <div id="mobileTunnelUrl" style="display: none; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-bottom: 15px; color: #fff; word-break: break-all;">
+                            <strong>Tunnel URL:</strong><br>
+                            <a id="tunnelUrlLink" href="#" target="_blank" style="color: #4fc3f7; text-decoration: none;">Loading...</a>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <button id="startMobileTunnelBtn" onclick="startMobileTunnel()" style="flex: 1; background: #34c759; font-size: 16px; padding: 12px;">
+                                ▶️ Start Tunnel
+                            </button>
+                            <button id="stopMobileTunnelBtn" onclick="stopMobileTunnel()" style="flex: 1; background: #ff3b30; font-size: 16px; padding: 12px;" disabled>
+                                ⏹ Stop Tunnel
+                            </button>
+                        </div>
+                        <button onclick="checkMobileTunnelStatus()" style="width: 100%; background: #007bff; font-size: 14px; padding: 10px;">
+                            🔄 Refresh Status
+                        </button>
+                        <p style="font-size: 12px; color: #e0e0e0; margin: 10px 0 0 0;">
+                            💡 Start the tunnel only when you need remote mobile access. Keep it stopped for local network use.
+                        </p>
+                    </div>
+
+                    <!-- APK Download -->
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;">
+                        <h3 style="color: #fff; margin-top: 0;">📲 Download Mobile App</h3>
+                        <div style="padding: 15px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-bottom: 15px; text-align: center;">
+                            <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
+                            <p style="color: #fff; margin: 0 0 15px 0;">Get the Android app to access your server from anywhere</p>
+                            <button onclick="downloadAPK()" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 16px; padding: 15px; border: none; cursor: pointer; border-radius: 8px; color: white; font-weight: bold;">
+                                📥 Download APK
+                            </button>
+                        </div>
+                        <div style="font-size: 12px; color: #e0e0e0;">
+                            <strong>Installation Steps:</strong><br>
+                            1. Click "Download APK" above<br>
+                            2. Enable "Install from Unknown Sources" in Android settings<br>
+                            3. Open the downloaded APK file<br>
+                            4. Follow installation prompts<br>
+                            5. Open app and connect!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="mobileAppOutput" class="output" style="background: rgba(0,0,0,0.3); color: #fff;">
+                Mobile app controls ready. Start the tunnel to enable remote mobile access.
+            </div>
+        </div>
+
         <div class="section">
             <h2>📊 Data Storage</h2>
             <div class="flex-row">

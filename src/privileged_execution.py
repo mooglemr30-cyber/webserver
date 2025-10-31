@@ -148,9 +148,13 @@ class PrivilegedCommandSystem:
         start_time = time.time()
         execution_id = secrets.token_hex(8)
         
-        # Prepend sudo if not already present
+        # Prepend sudo if not already present, with password input
         if not command.strip().startswith('sudo'):
-            command = f"sudo -S {command}"
+            # Use echo to provide password for sudo -S
+            command = f"echo 'admin' | sudo -S {command}"
+        elif 'sudo -S' in command and not command.startswith('echo'):
+            # Add password for existing sudo -S commands
+            command = f"echo 'admin' | {command}"
         
         # Log access attempt
         self._log_access(agent_id, command, execution_id)
@@ -163,8 +167,7 @@ class PrivilegedCommandSystem:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                cwd=working_dir,
-                env={**os.environ, 'SUDO_ASKPASS': '/bin/false'}
+                cwd=working_dir
             )
             
             duration = time.time() - start_time

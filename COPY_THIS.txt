@@ -1,0 +1,57 @@
+╔══════════════════════════════════════════════════════════════╗
+║              🚀 OPTION 1: SIMPLE BUILD (RECOMMENDED)         ║
+║                    NO SUDO NEEDED!                           ║
+╚══════════════════════════════════════════════════════════════╝
+
+cd /home/admin1/Documents/webserver && chmod +x build_simple.sh && bash build_simple.sh
+
+
+╔══════════════════════════════════════════════════════════════╗
+║         🔧 OPTION 2: FULL BUILD (USES SUDO FOR NPM)         ║
+╚══════════════════════════════════════════════════════════════╝
+
+cd /home/admin1/Documents/webserver && chmod +x build_expo_app.sh && bash build_expo_app.sh
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                       INSTRUCTIONS                           ║
+╚══════════════════════════════════════════════════════════════╝
+
+OPTION 1 (Recommended):
+1. Copy the OPTION 1 command above (build_simple.sh)
+2. Paste in your terminal
+3. Press Enter
+4. When asked, type: 1
+5. Press Enter again
+6. Browser opens - login to Expo (free account)
+7. Wait 10 minutes for cloud build
+8. Done!
+
+OPTION 2 (If Option 1 fails):
+1. Copy the OPTION 2 command (build_expo_app.sh)
+2. Paste in terminal
+3. Enter your password when prompted (for sudo)
+4. Choose option 1
+5. Browser opens for Expo login
+6. Wait for build
+7. Done!
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                     WHY TWO OPTIONS?                         ║
+╚══════════════════════════════════════════════════════════════╝
+
+Option 1: Installs everything locally in the project
+  ✓ No sudo needed
+  ✓ No global npm installs
+  ✓ Cleaner and safer
+
+Option 2: Installs Expo/EAS globally on your system
+  ✓ Available everywhere
+  ✓ Needs sudo for global npm install
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                   RECOMMENDED: USE OPTION 1! 🎉              ║
+╚══════════════════════════════════════════════════════════════╝
+

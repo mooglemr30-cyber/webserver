@@ -1,0 +1,51 @@
+# EAS Build Ignore File
+# Reduces upload size and build time
+
+# Node modules (will be reinstalled on build server)
+node_modules/
+
+# Development files
+.expo/
+.expo-shared/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Documentation
+*.md
+docs/
+
+# Build artifacts
+android/app/build/
+android/.gradle/
+ios/build/
+ios/Pods/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git
+.git/
+.gitignore
+
+# Misc
+.cache/
+tmp/
+temp/
+

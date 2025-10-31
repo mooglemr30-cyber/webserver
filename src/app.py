@@ -16,9 +16,17 @@ import time
 import requests
 import zipfile
 from datetime import datetime
-from data_store import DataStore
-from file_store import FileStore
-from program_store import ProgramStore
+
+# Handle both direct execution and module import
+if __name__ == '__main__':
+    from data_store import DataStore
+    from file_store import FileStore
+    from program_store import ProgramStore
+else:
+    from .data_store import DataStore
+    from .file_store import FileStore
+    from .program_store import ProgramStore
+
 from werkzeug.utils import secure_filename
 import io
 import pexpect
@@ -30,9 +38,19 @@ import psutil
 import socket
 from collections import deque
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from performance import CacheManager
-from auth_system import AuthenticationManager, create_auth_decorators
-from privileged_execution import get_privileged_system
+
+# Handle both direct execution and module import
+if __name__ == '__main__':
+    from performance import CacheManager
+    from auth_system import AuthenticationManager, create_auth_decorators
+    from privileged_execution import get_privileged_system
+    from tunnel_manager import PersistentTunnelManager
+else:
+    from .performance import CacheManager
+    from .auth_system import AuthenticationManager, create_auth_decorators
+    from .privileged_execution import get_privileged_system
+    from .tunnel_manager import PersistentTunnelManager
+
 # Monitoring temporarily disabled - causing blocking issues
 # from monitoring import initialize_monitoring, get_monitoring_manager
 
@@ -55,6 +73,9 @@ data_store = DataStore()
 file_store = FileStore()
 program_store = ProgramStore()
 cache = CacheManager(use_redis=False)
+
+# Initialize persistent tunnel manager for mobile access
+persistent_tunnel = PersistentTunnelManager()
 
 # Global variables to store tunnel info
 tunnel_info = {
@@ -1181,113 +1202,26 @@ def execute_programs_terminal():
             'error': f'Execution failed: {str(e)}'
         }), 500
 
-@app.route('/api/execute/interactive', methods=['POST'])
-def handle_interactive_response():
-    """Handle interactive command responses."""
+@app.route('/api/programs-terminal/close', methods=['POST'])
+def close_programs_terminal():
+    """Close the persistent terminal session in the programs directory."""
+    global programs_terminal_session
+
     try:
-        request_data = request.get_json()
-        if not request_data or 'session_id' not in request_data or 'response' not in request_data:
-            return jsonify({
-                'success': False,
-                'error': 'Session ID and response are required'
-            }), 400
-        
-        session_id = request_data['session_id']
-        response = request_data['response']
-        
-        with session_lock:
-            if session_id not in interactive_sessions:
-                return jsonify({
-                    'success': False,
-                    'error': 'Invalid or expired session'
-                }), 404
-            
-            session = interactive_sessions[session_id]
-            child = session['child']
-        
-        try:
-            # Send the response
-            child.sendline(response)
-            
-            # Wait for next prompt or completion
+        if programs_terminal_session and programs_terminal_session.get('process'):
             try:
-                index = child.expect([r'.*[yY]/[nN].*', r'.*\(y/n\).*', r'.*\[Y/n\].*', r'.*\[y/N\].*', 
-                                     r'.*Enter.*', r'.*Continue.*', r'.*Press.*', r'.*confirm.*',
-                                     pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-                
-                if index < 8:  # Another interactive prompt
-                    output = child.before
-                    clean_new_output = clean_output(output) if output else ''
-                    
-                    return jsonify({
-                        'success': True,
-                        'output': clean_new_output,
-                        'waiting_for_input': True,
-                        'completed': False,
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                elif index == 8:  # EOF - command completed
-                    output = child.before
-                    if hasattr(child, 'after') and child.after:
-                        output += str(child.after)
-                    exit_code = child.exitstatus if child.exitstatus is not None else 0
-                    
-                    # Clean up session
-                    with session_lock:
-                        if session_id in interactive_sessions:
-                            del interactive_sessions[session_id]
-                    
-                    return jsonify({
-                        'success': True,
-                        'output': clean_output(output),
-                        'completed': True,
-                        'return_code': exit_code,
-                        'timestamp': datetime.now().isoformat()
-                    })
-                
-                else:  # Timeout
-                    output = child.before if hasattr(child, 'before') else ''
-                    return jsonify({
-                        'success': True,
-                        'output': clean_output(output),
-                        'waiting_for_input': True,
-                        'completed': False,
-                        'timestamp': datetime.now().isoformat()
-                    })
-            
-            except pexpect.EOF:
-                # Command completed
-                output = child.before
-                exit_code = child.exitstatus if child.exitstatus is not None else 0
-                
-                # Clean up session
-                with session_lock:
-                    if session_id in interactive_sessions:
-                        del interactive_sessions[session_id]
-                
-                return jsonify({
-                    'success': True,
-                    'output': clean_output(output),
-                    'completed': True,
-                    'return_code': exit_code,
-                    'timestamp': datetime.now().isoformat()
-                })
-        
-        except Exception as e:
-            # Clean up session on error
-            with session_lock:
-                if session_id in interactive_sessions:
-                    try:
-                        interactive_sessions[session_id]['child'].close(force=True)
-                    except:
-                        pass
-                    del interactive_sessions[session_id]
-            
-            return jsonify({
-                'success': False,
-                'error': f'Interactive response failed: {str(e)}'
-            }), 500
+                programs_terminal_session['process'].sendline('exit')
+                programs_terminal_session['process'].close(force=True)
+            except:
+                pass
+
+            programs_terminal_session = None
+
+        return jsonify({
+            'success': True,
+            'message': 'Programs terminal session closed',
+            'timestamp': datetime.now().isoformat()
+        })
 
     except Exception as e:
         return jsonify({
@@ -1295,187 +1229,198 @@ def handle_interactive_response():
             'error': str(e)
         }), 500
 
-@app.route('/api/execute', methods=['POST'])
-def execute_command():
-    """Execute a command (use with caution)."""
+# AI Agent Execution Endpoints
+@app.route('/api/ai-agent/execute', methods=['POST'])
+def ai_agent_execute():
+    """Execute a command as an AI agent."""
     try:
-        request_data = request.get_json()
-        if not request_data or 'command' not in request_data:
-            return jsonify({
-                'success': False,
-                'error': 'Command is required'
-            }), 400
-        
-        command = request_data['command']
-        sudo_password = request_data.get('sudo_password')
-        interactive = request_data.get('interactive', False)
-        
-        # Security warning: This is potentially dangerous
-        # In a production environment, you would want to restrict commands
+        data = request.get_json()
+        command = data.get('command')
+        agent_id = data.get('agent_id', 'unknown')
+        timeout = data.get('timeout', 300)
+        working_dir = data.get('working_dir')
+
+        if not command:
+            return api_error('Missing command field', 400)
+
+        # For now, just log and echo the command back
+        print(f"Executing as AI agent ({agent_id}): {command}")
+
+        return api_ok({
+            'message': 'Command executed',
+            'command': command,
+            'agent_id': agent_id,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        return api_error(f'Execution failed: {str(e)}', 500)
+
+# ---------------------------
+# API v2: health and programs list
+# ---------------------------
+
+@app.get('/api/v2/health')
+def v2_health():
+    return api_ok({'status': 'healthy'})
+
+@app.get('/api/v2/programs/list')
+def v2_list_programs():
+    try:
+        # Validate query
         try:
-            if interactive:
-                # Handle interactive command execution
-                return execute_interactive_command(command, sudo_password)
-            
-            if sudo_password:
-                # Handle sudo command with password
-                sudo_command = f"sudo {command}"
-                
-                try:
-                    # Use pexpect directly for better control
-                    # Set environment to disable colors and formatting
-                    env = {
-                        'TERM': 'dumb',
-                        'NO_COLOR': '1',
-                        'FORCE_COLOR': '0',
-                        'COLORTERM': '',
-                        'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
-                    }
-                    
-                    # Use ptyprocess to capture both stdout and stderr together
-                    child = pexpect.spawn(sudo_command, timeout=60, encoding='utf-8', env=env)
-                    
-                    # Wait for password prompt
-                    index = child.expect(['.*password.*:', pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-                    
-                    if index == 0:  # Password prompt found
-                        child.sendline(sudo_password)
-                        
-                        # Wait for command to complete and capture all output
-                        try:
-                            child.expect(pexpect.EOF, timeout=60)
-                            # Get all output - both stdout and stderr are mixed in before
-                            output = child.before
-                            # Also check if there's any additional output after EOF
-                            if hasattr(child, 'after') and child.after:
-                                output += str(child.after)
-                            exit_code = child.exitstatus if child.exitstatus is not None else 0
-                        except pexpect.TIMEOUT:
-                            # Even on timeout, capture what we have
-                            output = child.before + "\n[Command timed out after 60 seconds]"
-                            try:
-                                child.close(force=True)
-                            except:
-                                pass
-                            exit_code = 124
-                            
-                    elif index == 1:  # EOF (command completed without password prompt)
-                        output = child.before
-                        if hasattr(child, 'after') and child.after:
-                            output += str(child.after)
-                        exit_code = child.exitstatus if child.exitstatus is not None else 0
-                        
-                    else:  # Timeout waiting for password prompt
-                        output = "[Timeout waiting for password prompt]"
-                        try:
-                            child.close(force=True)
-                        except:
-                            pass
-                        exit_code = 124
-                    
-                    # Clean up output - remove ANSI codes and formatting
-                    if output:
-                        import re
-                        # Remove ANSI escape sequences
-                        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-                        output = ansi_escape.sub('', output)
-                        
-                        lines = output.split('\n')
-                        # Only remove password prompt lines, preserve all other content including empty lines
-                        filtered_lines = []
-                        for line in lines:
-                            # Only skip password prompts, keep everything else including empty lines
-                            if not any(keyword in line.lower() for keyword in ['password for', '[sudo]', 'sorry, try again']):
-                                filtered_lines.append(line.rstrip())  # Only strip trailing whitespace
-    
-                        # Remove leading/trailing empty lines but preserve internal structure
-                        while filtered_lines and not filtered_lines[0].strip():
-                            filtered_lines.pop(0)
-                        while filtered_lines and not filtered_lines[-1].strip():
-                            filtered_lines.pop()
-                        
-                        output = '\n'.join(filtered_lines)
-                    
-                    return jsonify({
-                        'success': True,
-                        'command': sudo_command,
-                        'stdout': output,
-                        'stderr': '',
-                        'return_code': exit_code,
-                        'timestamp': datetime.now().isoformat()
-                    })
-                    
-                except pexpect.exceptions.ExceptionPexpect as e:
-                    return jsonify({
-                        'success': False,
-                        'error': f'Sudo execution failed: {str(e)}'
-                    }), 500
-                        
-            else:
-                # Handle normal command without sudo
-                # Set environment to disable colors and formatting
-                env = dict(os.environ)
-                env.update({
-                    'TERM': 'dumb',
-                    'NO_COLOR': '1',
-                    'FORCE_COLOR': '0',
-                    'COLORTERM': ''
-                })
-                
-                result = subprocess.run(
-                    command,
-                    shell=True,
-                    capture_output=True,
-                    text=True,
-                    timeout=60,  # 60 second timeout
-                    env=env
-                )
-                
-                # Clean up output to remove ANSI codes
-                stdout_clean = result.stdout
-                stderr_clean = result.stderr
-                
-                if stdout_clean:
-                    import re
-                    # Remove ANSI escape sequences
-                    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-                    stdout_clean = ansi_escape.sub('', stdout_clean)
-                
-                if stderr_clean:
-                    import re
-                    # Remove ANSI escape sequences
-                    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-                    stderr_clean = ansi_escape.sub('', stderr_clean)
-                
-                return jsonify({
-                    'success': True,
-                    'command': command,
-                    'stdout': stdout_clean,
-                    'stderr': stderr_clean,
-                    'return_code': result.returncode,
-                    'timestamp': datetime.now().isoformat()
-                })
-        
-        except subprocess.TimeoutExpired:
-            return jsonify({
-                'success': False,
-                'error': 'Command timed out after 60 seconds'
-            }), 408
-        
-        except Exception as cmd_error:
-            return jsonify({
-                'success': False,
-                'error': f'Command execution failed: {str(cmd_error)}'
-            }), 500
-    
+            q = ListQuery(page=request.args.get('page'), limit=request.args.get('limit'))
+        except ValidationError as ve:
+            return api_error('Invalid query parameters', 400, details=ve.errors())
+
+        page = int(q.page) if q.page else None
+        limit = int(q.limit) if q.limit else None
+        cache_key = f"v2:programs:list:page={page or 'all'}:limit={limit or 'all'}"
+        cached = cache.get(cache_key)
+        if cached:
+            return api_ok(cached)
+
+        programs = program_store.get_program_list()
+        storage_info = program_store.get_storage_info()
+        total = len(programs)
+        if page and limit:
+            start = max(0, (page - 1) * limit)
+            end = start + limit
+            items = programs[start:end]
+        else:
+            items = programs
+            start = 0
+            end = total
+
+        data = {
+            'programs': items,
+            'storage': storage_info,
+            'pagination': {
+                'page': page or 1,
+                'limit': limit or total,
+                'total': total,
+                'has_next': bool(page and limit and (end < total)),
+            }
+        }
+        cache.set(cache_key, data, ttl=2)
+        return api_ok(data)
+    except Exception as e:
+        return api_error(str(e), 500)
+
+# ---------------------------
+# Dashboard API and Page
+# ---------------------------
+
+@app.get('/api/v2/dashboard')
+def v2_dashboard():
+        try:
+                storage = program_store.get_storage_info()
+                programs = program_store.get_program_list()
+
+                # Sort recent by upload_time if present
+                def _ts(p):
+                        return p.get('upload_time') or p.get('created_at') or ''
+                recent_programs = sorted(programs, key=_ts, reverse=True)[:10]
+
+                # Recent requests from in-memory (monitoring disabled temporarily)
+                recent_requests = list(REQUEST_HISTORY)[-50:]
+                endpoint_breakdown = []
+                system = {}
+                history = {}
+
+                data = {
+                        'storage': storage,
+                        'totals': {
+                                'programs': storage.get('total_programs', len(programs)),
+                                'projects': storage.get('total_projects', 0),
+                                'files': storage.get('total_files', 0),
+                                'size_bytes': storage.get('total_size', 0),
+                        },
+                        'recent_programs': recent_programs,
+                        'recent_requests': recent_requests,
+                        'endpoint_breakdown': endpoint_breakdown,
+                        'system_metrics': system,
+                        'system_history': history,
+                        'server_time': datetime.now().isoformat(),
+                }
+                return api_ok(data)
+        except Exception as e:
+                return api_error(str(e), 500)
+
+@app.route('/api/v2/dashboard', methods=['GET'])
+def dashboard_v2_api():
+    """API endpoint for dashboard data."""
+    try:
+        import psutil
+        import os
+
+        # Get program storage info
+        storage_info = program_store.get_storage_info()
+
+        # Get recent programs (last 10)
+        all_programs = program_store.get_program_list()
+        recent_programs = sorted(
+            all_programs,
+            key=lambda x: x.get('upload_time', ''),
+            reverse=True
+        )[:10]
+
+        # System metrics
+        system_metrics = {
+            'cpu_percent': psutil.cpu_percent(interval=0.1),
+            'memory_percent': psutil.virtual_memory().percent,
+            'disk_usage_percent': psutil.disk_usage('/').percent,
+            'process_count': len(psutil.pids()),
+            'load_average': list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else []
+        }
+
+        # Get monitoring data if available
+        endpoint_breakdown = []
+        recent_requests = []
+        try:
+            # Try to get monitoring data from the monitoring module if it's initialized
+            from monitoring import get_monitoring_manager
+
+            monitor = get_monitoring_manager()
+            if monitor and monitor.storage:
+                # Get endpoint breakdown from the database
+                endpoint_breakdown = monitor.storage.get_endpoint_breakdown(hours=1, limit=10)
+
+                # Get recent requests from the database
+                recent_requests = monitor.storage.get_recent_requests(limit=20)
+        except Exception as e:
+            # Monitoring not available or not initialized
+            pass
+
+        dashboard_data = {
+            'success': True,
+            'data': {
+                'server_time': datetime.now().isoformat(),
+                'totals': {
+                    'programs': storage_info.get('total_programs', 0),
+                    'projects': storage_info.get('total_projects', 0),
+                    'files': storage_info.get('total_files', 0),
+                    'size_bytes': storage_info.get('total_size', 0)
+                },
+                'storage': storage_info,
+                'recent_programs': recent_programs,
+                'system_metrics': system_metrics,
+                'endpoint_breakdown': endpoint_breakdown,
+                'recent_requests': recent_requests
+            }
+        }
+
+        return jsonify(dashboard_data)
+
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
 
-@app.route('/api/programs/upload', methods=['POST'])
-def upload_program():
+
+@app.route('/api/v2/programs/upload', methods=['POST'])
+def v2_upload_program():
     """Upload a single program file."""
     try:
         if 'file' not in request.files:
@@ -1511,8 +1456,8 @@ def upload_program():
             'error': str(e)
         }), 500
 
-@app.route('/api/programs/upload-multiple', methods=['POST'])
-def upload_multiple_programs():
+@app.route('/api/v2/programs/upload-multiple', methods=['POST'])
+def v2_upload_multiple_programs():
     """Upload multiple files as a project."""
     try:
         if 'files[]' not in request.files:
@@ -1578,25 +1523,9 @@ def upload_multiple_programs():
             'error': str(e)
         }), 500
 
-@app.route('/api/programs/list', methods=['GET'])
-def list_programs():
-    """Get list of all programs."""
-    try:
-        programs = program_store.get_program_list()
-        return jsonify({
-            'success': True,
-            'programs': programs,
-            'count': len(programs)
-        })
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
 
-@app.route('/api/programs/project/<project_id>/files', methods=['GET'])
-def get_project_files(project_id):
+@app.route('/api/v2/programs/project/<project_id>/files', methods=['GET'])
+def v2_get_project_files(project_id):
     """Get list of files in a project."""
     try:
         files = program_store.list_project_files(project_id)
@@ -1628,8 +1557,8 @@ def get_project_files(project_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/programs/execute/<filename>', methods=['POST'])
-def execute_program(filename):
+@app.route('/api/v2/programs/execute/<filename>', methods=['POST'])
+def v2_execute_program(filename):
     """Execute an uploaded program."""
     try:
         args = request.json.get('args', []) if request.json else []
@@ -1813,8 +1742,8 @@ def execute_program(filename):
         }), 500
 
 
-@app.route('/api/programs/execute-terminal/<project_id>', methods=['POST'])
-def execute_project_terminal(project_id):
+@app.route('/api/v2/programs/execute-terminal/<project_id>', methods=['POST'])
+def execute_project_terminal_v2(project_id):
     """Execute a terminal command in a project's directory."""
     try:
         command = request.json.get('command', '') if request.json else ''
@@ -2012,8 +1941,8 @@ def execute_interactive_program(cmd, cwd, use_sudo=False, sudo_password=None):
             'error': f'Failed to start interactive program: {str(e)}'
         }), 500
 
-@app.route('/api/programs/project/<project_id>/set-main', methods=['POST'])
-def set_project_main(project_id):
+@app.route('/api/v2/programs/project/<project_id>/set-main', methods=['POST'])
+def set_project_main_v2(project_id):
     """Set the main executable file for a project."""
     try:
         data = request.get_json(silent=True) or {}
@@ -2029,8 +1958,8 @@ def set_project_main(project_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/programs/delete/<filename>', methods=['DELETE'])
-def delete_program(filename):
+@app.route('/api/v2/programs/delete/<filename>', methods=['DELETE'])
+def delete_program_v2(filename):
     """Delete an uploaded program."""
     try:
         success = program_store.delete_program(filename)
@@ -2052,8 +1981,8 @@ def delete_program(filename):
             'error': str(e)
         }), 500
 
-@app.route('/api/programs/info/<filename>', methods=['GET'])
-def get_program_info(filename):
+@app.route('/api/v2/programs/info/<filename>', methods=['GET'])
+def get_program_info_v2(filename):
     """Get information about a specific program."""
     try:
         program_info = program_store.get_program_info(filename)
@@ -2076,8 +2005,8 @@ def get_program_info(filename):
         }), 500
 
 # File Storage Routes
-@app.route('/api/files/upload', methods=['POST'])
-def upload_files():
+@app.route('/api/v2/files/upload', methods=['POST'])
+def upload_files_v2():
     """Upload one or more files to storage."""
     try:
         if 'files' not in request.files:
@@ -2151,8 +2080,8 @@ def upload_files():
             'error': str(e)
         }), 500
 
-@app.route('/api/files/list', methods=['GET'])
-def list_files():
+@app.route('/api/v2/files/list', methods=['GET'])
+def list_files_v2():
     """List all uploaded files."""
     try:
         files = file_store.list_files()
@@ -2174,8 +2103,8 @@ def list_files():
             'error': str(e)
         }), 500
 
-@app.route('/api/files/download/<filename>', methods=['GET'])
-def download_file(filename):
+@app.route('/api/v2/files/download/<filename>', methods=['GET'])
+def download_file_v2(filename):
     """Download a file from storage."""
     try:
         success, file_data, metadata = file_store.get_file(filename)
@@ -2203,8 +2132,8 @@ def download_file(filename):
             'error': str(e)
         }), 500
 
-@app.route('/api/files/delete/<filename>', methods=['DELETE'])
-def delete_file(filename):
+@app.route('/api/v2/files/delete/<filename>', methods=['DELETE'])
+def delete_file_v2(filename):
     """Delete a file from storage."""
     try:
         success, message = file_store.delete_file(filename)
@@ -2227,8 +2156,8 @@ def delete_file(filename):
             'error': str(e)
         }), 500
 
-@app.route('/api/files/storage', methods=['GET'])
-def get_storage_info():
+@app.route('/api/v2/files/storage', methods=['GET'])
+def get_storage_info_v2():
     """Get storage information and statistics."""
     try:
         storage_info = file_store.get_storage_info()
@@ -2245,8 +2174,8 @@ def get_storage_info():
         }), 500
 
 # Tunnel Management Routes
-@app.route('/api/ngrok/start', methods=['POST'])
-def api_start_ngrok():
+@app.route('/api/v2/ngrok/start', methods=['POST'])
+def api_start_ngrok_v2():
     """Start ngrok tunnel."""
     try:
         success = start_ngrok_tunnel()
@@ -2265,8 +2194,8 @@ def api_start_ngrok():
             'error': str(e)
         }), 500
 
-@app.route('/api/ngrok/stop', methods=['POST'])
-def api_stop_ngrok():
+@app.route('/api/v2/ngrok/stop', methods=['POST'])
+def api_stop_ngrok_v2():
     """Stop ngrok tunnel."""
     try:
         success = stop_ngrok_tunnel()
@@ -2282,8 +2211,8 @@ def api_stop_ngrok():
             'error': str(e)
         }), 500
 
-@app.route('/api/ngrok/status', methods=['GET'])
-def api_ngrok_status():
+@app.route('/api/v2/ngrok/status', methods=['GET'])
+def api_ngrok_status_v2():
     """Get ngrok status."""
     try:
         status = get_ngrok_status()
@@ -2301,8 +2230,8 @@ def api_ngrok_status():
             'error': str(e)
         }), 500
 
-@app.route('/api/localtunnel/start', methods=['POST'])
-def api_start_localtunnel():
+@app.route('/api/v2/localtunnel/start', methods=['POST'])
+def api_start_localtunnel_v2():
     """Start localtunnel tunnel."""
     try:
         success = start_localtunnel_tunnel()
@@ -2321,8 +2250,8 @@ def api_start_localtunnel():
             'error': str(e)
         }), 500
 
-@app.route('/api/localtunnel/stop', methods=['POST'])
-def api_stop_localtunnel():
+@app.route('/api/v2/localtunnel/stop', methods=['POST'])
+def api_stop_localtunnel_v2():
     """Stop localtunnel tunnel."""
     try:
         success = stop_localtunnel_tunnel()
@@ -2338,8 +2267,8 @@ def api_stop_localtunnel():
             'error': str(e)
         }), 500
 
-@app.route('/api/localtunnel/status', methods=['GET'])
-def api_localtunnel_status():
+@app.route('/api/v2/localtunnel/status', methods=['GET'])
+def api_localtunnel_status_v2():
     """Get localtunnel status."""
     try:
         status = get_localtunnel_status()
@@ -2357,8 +2286,8 @@ def api_localtunnel_status():
             'error': str(e)
         }), 500
 
-@app.route('/api/cloudflared/start', methods=['POST'])
-def api_start_cloudflared():
+@app.route('/api/v2/cloudflared/start', methods=['POST'])
+def api_start_cloudflared_v2():
     """Start cloudflared tunnel."""
     try:
         success = start_cloudflared_tunnel()
@@ -2377,8 +2306,8 @@ def api_start_cloudflared():
             'error': str(e)
         }), 500
 
-@app.route('/api/cloudflared/stop', methods=['POST'])
-def api_stop_cloudflared():
+@app.route('/api/v2/cloudflared/stop', methods=['POST'])
+def api_stop_cloudflared_v2():
     """Stop cloudflared tunnel."""
     try:
         success = stop_cloudflared_tunnel()
@@ -2394,8 +2323,8 @@ def api_stop_cloudflared():
             'error': str(e)
         }), 500
 
-@app.route('/api/cloudflared/status', methods=['GET'])
-def api_cloudflared_status():
+@app.route('/api/v2/cloudflared/status', methods=['GET'])
+def api_cloudflared_status_v2():
     """Get cloudflared status."""
     try:
         status = get_cloudflared_status()
@@ -2413,8 +2342,8 @@ def api_cloudflared_status():
             'error': str(e)
         }), 500
 
-@app.route('/api/tunnels/status', methods=['GET'])
-def api_all_tunnels_status():
+@app.route('/api/v2/tunnels/status', methods=['GET'])
+def api_all_tunnels_status_v2():
     """Get status of all tunnels."""
     try:
         ngrok_status = get_ngrok_status()
@@ -2436,8 +2365,8 @@ def api_all_tunnels_status():
             'error': str(e)
         }), 500
 
-@app.route('/api/tunnels/stop-all', methods=['POST'])
-def api_stop_all_tunnels():
+@app.route('/api/v2/tunnels/stop-all', methods=['POST'])
+def api_stop_all_tunnels_v2():
     """Stop all active tunnels."""
     try:
         results = {
@@ -2461,8 +2390,8 @@ def api_stop_all_tunnels():
         }), 500
 
 # Voice Chat Management Routes
-@app.route('/api/voice-chat/rooms', methods=['GET'])
-def list_voice_rooms():
+@app.route('/api/v2/voice-chat/rooms', methods=['GET'])
+def list_voice_rooms_v2():
     """List all active voice chat rooms."""
     try:
         with voice_chat_lock:
@@ -2515,8 +2444,8 @@ def initialize_main_voice_room():
 # Initialize the main room on startup
 initialize_main_voice_room()
 
-@app.route('/api/voice-chat/create', methods=['POST'])
-def create_voice_room():
+@app.route('/api/v2/voice-chat/create', methods=['POST'])
+def create_voice_room_v2():
     """Get or create the main voice chat room (always returns the same room)."""
     try:
         with voice_chat_lock:
@@ -2540,8 +2469,8 @@ def create_voice_room():
             'error': str(e)
         }), 500
 
-@app.route('/api/voice-chat/join/<room_id>', methods=['POST'])
-def join_voice_room(room_id):
+@app.route('/api/v2/voice-chat/join/<room_id>', methods=['POST'])
+def join_voice_room_v2(room_id):
     """Join a voice chat room."""
     try:
         # Always use the main room
@@ -2579,8 +2508,8 @@ def join_voice_room(room_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/voice-chat/leave/<room_id>/<participant_id>', methods=['POST'])
-def leave_voice_room(room_id, participant_id):
+@app.route('/api/v2/voice-chat/leave/<room_id>/<participant_id>', methods=['POST'])
+def leave_voice_room_v2(room_id, participant_id):
     """Leave a voice chat room."""
     try:
         # Always use the main room
@@ -2623,8 +2552,8 @@ def leave_voice_room(room_id, participant_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/voice-chat/signal/<room_id>', methods=['POST'])
-def voice_chat_signal(room_id):
+@app.route('/api/v2/voice-chat/signal/<room_id>', methods=['POST'])
+def voice_chat_signal_v2(room_id):
     """Handle WebRTC signaling for voice chat."""
     try:
         request_data = request.get_json() or {}
@@ -2667,8 +2596,8 @@ def voice_chat_signal(room_id):
             'error': str(e)
         }), 500
 
-@app.route('/api/voice-chat/poll/<room_id>/<participant_id>', methods=['GET'])
-def poll_voice_chat(room_id, participant_id):
+@app.route('/api/v2/voice-chat/poll/<room_id>/<participant_id>', methods=['GET'])
+def poll_voice_chat_v2(room_id, participant_id):
     """Poll for new signaling messages (simple polling for WebRTC)."""
     try:
         with voice_chat_lock:
@@ -2702,7 +2631,7 @@ def poll_voice_chat(room_id, participant_id):
         }), 500
 
 @app.route('/voice-chat')
-def voice_chat_page():
+def voice_chat_page_v2():
     """Serve the voice chat page."""
     return render_template('voice_chat.html')
 
@@ -3270,6 +3199,602 @@ def privileged_info():
         }), 500
 
 
+# ==================== AIAGENTSTORAGE API ====================
+
+# AIAGENTSTORAGE base path
+AIAGENTSTORAGE_BASE = "/run/media/admin1/1E1EC1FE1EC1CF491/to delete/AIAGENTSTORAGE"
+
+def is_safe_path(base_path, path, follow_symlinks=True):
+    """Check if path is within base_path (security check)."""
+    if follow_symlinks:
+        return os.path.realpath(path).startswith(os.path.realpath(base_path))
+    return os.path.abspath(path).startswith(os.path.abspath(base_path))
+
+
+@app.route('/api/aiagentstorage/info', methods=['GET'])
+def aiagentstorage_info():
+    """
+    Get information about AIAGENTSTORAGE system.
+    
+    Returns:
+        Directory structure and available endpoints
+    """
+    try:
+        if not os.path.exists(AIAGENTSTORAGE_BASE):
+            return jsonify({
+                'error': 'AIAGENTSTORAGE directory not found',
+                'path': AIAGENTSTORAGE_BASE
+            }), 404
+        
+        # Get directory stats
+        total_size = 0
+        file_count = 0
+        dir_count = 0
+        
+        for root, dirs, files in os.walk(AIAGENTSTORAGE_BASE):
+            dir_count += len(dirs)
+            file_count += len(files)
+            for file in files:
+                filepath = os.path.join(root, file)
+                try:
+                    total_size += os.path.getsize(filepath)
+                except:
+                    pass
+        
+        return jsonify({
+            'system': 'AIAGENTSTORAGE',
+            'base_path': AIAGENTSTORAGE_BASE,
+            'status': 'available',
+            'stats': {
+                'total_size_bytes': total_size,
+                'total_size_mb': round(total_size / (1024 * 1024), 2),
+                'file_count': file_count,
+                'directory_count': dir_count
+            },
+            'endpoints': {
+                'info': 'GET /api/aiagentstorage/info - System information',
+                'list': 'GET /api/aiagentstorage/list?path=<path> - List directory contents',
+                'read': 'GET /api/aiagentstorage/read?path=<path> - Read file contents',
+                'write': 'POST /api/aiagentstorage/write - Write file (body: {path, content, mode})',
+                'delete': 'DELETE /api/aiagentstorage/delete?path=<path> - Delete file/directory',
+                'mkdir': 'POST /api/aiagentstorage/mkdir - Create directory (body: {path})',
+                'exists': 'GET /api/aiagentstorage/exists?path=<path> - Check if path exists',
+                'tree': 'GET /api/aiagentstorage/tree?path=<path>&depth=<depth> - Get directory tree'
+            },
+            'note': 'Paths are relative to AIAGENTSTORAGE root. Use forward slashes.'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/aiagentstorage/list', methods=['GET'])
+def aiagentstorage_list():
+    """
+    List contents of a directory in AIAGENTSTORAGE.
+    
+    Query params:
+        path: Relative path (default: root)
+    """
+    try:
+        rel_path = request.args.get('path', '').strip('/')
+        full_path = os.path.join(AIAGENTSTORAGE_BASE, rel_path) if rel_path else AIAGENTSTORAGE_BASE
+        
+        # Security check
+        if not is_safe_path(AIAGENTSTORAGE_BASE, full_path):
+            return jsonify({
+                'error': 'Access denied: Path is outside AIAGENTSTORAGE'
+            }), 403
+        
+        if not os.path.exists(full_path):
+            return jsonify({
+                'error': 'Path does not exist',
+                'path': rel_path
+            }), 404
+        
+        if not os.path.isdir(full_path):
+            return jsonify({
+                'error': 'Path is not a directory',
+                'path': rel_path
+            }), 400
+        
+        # List directory contents
+        items = []
+        for entry in os.listdir(full_path):
+            entry_path = os.path.join(full_path, entry)
+            entry_rel_path = os.path.join(rel_path, entry) if rel_path else entry
+            
+            try:
+                stat = os.stat(entry_path)
+                is_dir = os.path.isdir(entry_path)
+                
+                items.append({
+                    'name': entry,
+                    'path': entry_rel_path,
+                    'type': 'directory' if is_dir else 'file',
+                    'size': stat.st_size if not is_dir else None,
+                    'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    'permissions': oct(stat.st_mode)[-3:]
+                })
+            except Exception as e:
+                items.append({
+                    'name': entry,
+                    'path': entry_rel_path,
+                    'error': str(e)
+                })
+        
+        return jsonify({
+            'path': rel_path or '/',
+            'full_path': full_path,
+            'items': sorted(items, key=lambda x: (x.get('type') != 'directory', x['name'])),
+            'count': len(items)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/aiagentstorage/read', methods=['GET'])
+def aiagentstorage_read():
+    """
+    Read contents of a file in AIAGENTSTORAGE.
+    
+    Query params:
+        path: Relative path to file
+        encoding: Text encoding (default: utf-8)
+        binary: Return base64 encoded binary data (default: false)
+    """
+    try:
+        rel_path = request.args.get('path', '').strip('/')
+        if not rel_path:
+            return jsonify({
+                'error': 'Path parameter is required'
+            }), 400
+        
+        full_path = os.path.join(AIAGENTSTORAGE_BASE, rel_path)
+        
+        # Security check
+        if not is_safe_path(AIAGENTSTORAGE_BASE, full_path):
+            return jsonify({
+                'error': 'Access denied: Path is outside AIAGENTSTORAGE'
+            }), 403
+        
+        if not os.path.exists(full_path):
+            return jsonify({
+                'error': 'File does not exist',
+                'path': rel_path
+            }), 404
+        
+        if not os.path.isfile(full_path):
+            return jsonify({
+                'error': 'Path is not a file',
+                'path': rel_path
+            }), 400
+        
+        encoding = request.args.get('encoding', 'utf-8')
+        is_binary = request.args.get('binary', 'false').lower() == 'true'
+        
+        if is_binary:
+            import base64
+            with open(full_path, 'rb') as f:
+                content = base64.b64encode(f.read()).decode('ascii')
+            content_type = 'binary'
+        else:
+            with open(full_path, 'r', encoding=encoding) as f:
+                content = f.read()
+            content_type = 'text'
+        
+        stat = os.stat(full_path)
+        
+        return jsonify({
+            'path': rel_path,
+            'content': content,
+            'content_type': content_type,
+            'encoding': encoding if not is_binary else 'base64',
+            'size': stat.st_size,
+            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
+        }), 200
+        
+    except UnicodeDecodeError:
+        return jsonify({
+            'error': 'File appears to be binary. Use binary=true parameter.',
+            'path': rel_path
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/aiagentstorage/write', methods=['POST'])
+def aiagentstorage_write():
+    """
+    Write content to a file in AIAGENTSTORAGE.
+    
+    Body (JSON):
+        path: Relative path to file
+        content: File content (string or base64 for binary)
+        mode: 'write' (default) or 'append'
+        encoding: Text encoding (default: utf-8)
+        binary: Content is base64 encoded binary (default: false)
+        create_dirs: Create parent directories if missing (default: true)
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'error': 'JSON body is required'
+            }), 400
+        
+        rel_path = data.get('path', '').strip('/')
+        if not rel_path:
+            return jsonify({
+                'error': 'path is required'
+            }), 400
+        
+        content = data.get('content', '')
+        mode = data.get('mode', 'write')
+        encoding = data.get('encoding', 'utf-8')
+        is_binary = data.get('binary', False)
+        create_dirs = data.get('create_dirs', True)
+        
+        full_path = os.path.join(AIAGENTSTORAGE_BASE, rel_path)
+        
+        # Security check
+        if not is_safe_path(AIAGENTSTORAGE_BASE, full_path):
+            return jsonify({
+                'error': 'Access denied: Path is outside AIAGENTSTORAGE'
+            }), 403
+        
+        # Create parent directories if needed
+        parent_dir = os.path.dirname(full_path)
+        if create_dirs and not os.path.exists(parent_dir):
+            os.makedirs(parent_dir, exist_ok=True)
+        
+        # Write file
+        if is_binary:
+            import base64
+            binary_content = base64.b64decode(content)
+            write_mode = 'ab' if mode == 'append' else 'wb'
+            with open(full_path, write_mode) as f:
+                f.write(binary_content)
+        else:
+            write_mode = 'a' if mode == 'append' else 'w'
+            with open(full_path, write_mode, encoding=encoding) as f:
+                f.write(content)
+        
+        stat = os.stat(full_path)
+        
+        return jsonify({
+            'success': True,
+            'path': rel_path,
+            'full_path': full_path,
+            'mode': mode,
+            'size': stat.st_size,
+            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/aiagentstorage/delete', methods=['DELETE'])
+def aiagentstorage_delete():
+    """
+    Delete a file or directory in AIAGENTSTORAGE.
+    
+    Query params:
+        path: Relative path to delete
+        recursive: Delete directories recursively (default: false)
+    """
+    try:
+        rel_path = request.args.get('path', '').strip('/')
+        if not rel_path:
+            return jsonify({
+                'error': 'path parameter is required'
+            }), 400
+        
+        recursive = request.args.get('recursive', 'false').lower() == 'true'
+        full_path = os.path.join(AIAGENTSTORAGE_BASE, rel_path)
+        
+        # Security check
+        if not is_safe_path(AIAGENTSTORAGE_BASE, full_path):
+            return jsonify({
+                'error': 'Access denied: Path is outside AIAGENTSTORAGE'
+            }), 403
+        
+        # Prevent deleting root
+        if full_path == AIAGENTSTORAGE_BASE:
+            return jsonify({
+                'error': 'Cannot delete AIAGENTSTORAGE root directory'
+            }), 403
+        
+        if not os.path.exists(full_path):
+            return jsonify({
+                'error': 'Path does not exist',
+                'path': rel_path
+            }), 404
+        
+        if os.path.isfile(full_path):
+            os.remove(full_path)
+            deleted_type = 'file'
+        elif os.path.isdir(full_path):
+            if recursive:
+                import shutil
+                shutil.rmtree(full_path)
+                deleted_type = 'directory (recursive)'
+            else:
+                os.rmdir(full_path)
+                deleted_type = 'directory'
+        else:
+            return jsonify({
+                'error': 'Unknown file type',
+                'path': rel_path
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            'path': rel_path,
+            'deleted_type': deleted_type
+        }), 200
+        
+    except OSError as e:
+        if 'Directory not empty' in str(e):
+            return jsonify({
+                'error': 'Directory not empty. Use recursive=true to delete.',
+                'path': rel_path
+            }), 400
+        return jsonify({
+            'error': str(e)
+        }), 500
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/aiagentstorage/mkdir', methods=['POST'])
+def aiagentstorage_mkdir():
+    """
+    Create a directory in AIAGENTSTORAGE.
+    
+    Body (JSON):
+        path: Relative path to create
+        parents: Create parent directories if missing (default: true)
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'error': 'JSON body is required'
+            }), 400
+        
+        rel_path = data.get('path', '').strip('/')
+        if not rel_path:
+            return jsonify({
+                'error': 'path is required'
+            }), 400
+        
+        parents = data.get('parents', True)
+        full_path = os.path.join(AIAGENTSTORAGE_BASE, rel_path)
+        
+        # Security check
+        if not is_safe_path(AIAGENTSTORAGE_BASE, full_path):
+            return jsonify({
+                'error': 'Access denied: Path is outside AIAGENTSTORAGE'
+            }), 403
+        
+        if os.path.exists(full_path):
+            return jsonify({
+                'error': 'Path already exists',
+                'path': rel_path
+            }), 409
+        
+        if parents:
+            os.makedirs(full_path, exist_ok=True)
+        else:
+            os.mkdir(full_path)
+        
+        return jsonify({
+            'success': True,
+            'path': rel_path,
+            'full_path': full_path
+        }), 201
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/aiagentstorage/exists', methods=['GET'])
+def aiagentstorage_exists():
+    """
+    Check if a path exists in AIAGENTSTORAGE.
+    
+    Query params:
+        path: Relative path to check
+    """
+    try:
+        rel_path = request.args.get('path', '').strip('/')
+        if not rel_path:
+            return jsonify({
+                'error': 'path parameter is required'
+            }), 400
+        
+        full_path = os.path.join(AIAGENTSTORAGE_BASE, rel_path)
+        
+        # Security check
+        if not is_safe_path(AIAGENTSTORAGE_BASE, full_path):
+            return jsonify({
+                'error': 'Access denied: Path is outside AIAGENTSTORAGE'
+            }), 403
+        
+        exists = os.path.exists(full_path)
+        
+        result = {
+            'path': rel_path,
+            'exists': exists
+        }
+        
+        if exists:
+            stat = os.stat(full_path)
+            result.update({
+                'type': 'directory' if os.path.isdir(full_path) else 'file',
+                'size': stat.st_size if os.path.isfile(full_path) else None,
+                'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/aiagentstorage/tree', methods=['GET'])
+def aiagentstorage_tree():
+    """
+    Get directory tree structure from AIAGENTSTORAGE.
+    
+    Query params:
+        path: Starting path (default: root)
+        depth: Maximum depth (default: 3, max: 10)
+    """
+    try:
+        rel_path = request.args.get('path', '').strip('/')
+        max_depth = min(int(request.args.get('depth', 3)), 10)
+        
+        full_path = os.path.join(AIAGENTSTORAGE_BASE, rel_path) if rel_path else AIAGENTSTORAGE_BASE
+        
+        # Security check
+        if not is_safe_path(AIAGENTSTORAGE_BASE, full_path):
+            return jsonify({
+                'error': 'Access denied: Path is outside AIAGENTSTORAGE'
+            }), 403
+        
+        if not os.path.exists(full_path):
+            return jsonify({
+                'error': 'Path does not exist',
+                'path': rel_path
+            }), 404
+        
+        def build_tree(path, current_depth=0):
+            """Recursively build directory tree."""
+            if current_depth >= max_depth:
+                return None
+            
+            try:
+                items = []
+                for entry in sorted(os.listdir(path)):
+                    entry_path = os.path.join(path, entry)
+                    entry_rel = os.path.relpath(entry_path, AIAGENTSTORAGE_BASE)
+                    
+                    stat = os.stat(entry_path)
+                    is_dir = os.path.isdir(entry_path)
+                    
+                    item = {
+                        'name': entry,
+                        'path': entry_rel,
+                        'type': 'directory' if is_dir else 'file',
+                        'size': stat.st_size if not is_dir else None
+                    }
+                    
+                    if is_dir:
+                        children = build_tree(entry_path, current_depth + 1)
+                        if children is not None:
+                            item['children'] = children
+                    
+                    items.append(item)
+                return items
+            except PermissionError:
+                return None
+        
+        tree = build_tree(full_path)
+        
+        return jsonify({
+            'path': rel_path or '/',
+            'max_depth': max_depth,
+            'tree': tree
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+# ============================================================================
+# Mobile API Endpoints - For Mobile App Access via Persistent Tunnel
+# ============================================================================
+
+@app.route('/api/mobile/tunnel/start', methods=['POST'])
+def mobile_tunnel_start():
+    """Start persistent tunnel for mobile access."""
+    try:
+        result = persistent_tunnel.start_tunnel(port=8000)
+        return api_ok(result)
+    except Exception as e:
+        return api_error(f"Failed to start tunnel: {str(e)}", status=500)
+
+@app.route('/api/mobile/tunnel/stop', methods=['POST'])
+def mobile_tunnel_stop():
+    """Stop persistent tunnel."""
+    try:
+        result = persistent_tunnel.stop_tunnel()
+        return api_ok(result)
+    except Exception as e:
+        return api_error(f"Failed to stop tunnel: {str(e)}", status=500)
+
+@app.route('/api/mobile/tunnel/status', methods=['GET'])
+def mobile_tunnel_status():
+    """Get tunnel status."""
+    try:
+        status = persistent_tunnel.get_status()
+        return api_ok(status)
+    except Exception as e:
+        return api_error(f"Failed to get status: {str(e)}", status=500)
+
+@app.route('/api/mobile/config', methods=['GET'])
+def mobile_config():
+    """Get mobile app configuration including tunnel URL."""
+    try:
+        config = persistent_tunnel.get_mobile_config()
+        return api_ok({
+            'server': config,
+            'features': {
+                'data_storage': True,
+                'file_management': True,
+                'program_execution': True,
+                'command_execution': True,
+                'authentication': True
+            },
+            'version': '2.0.0'
+        })
+    except Exception as e:
+        return api_error(f"Failed to get config: {str(e)}", status=500)
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for mobile app."""
+    return api_ok({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'uptime': time.time() - getattr(app, '_start_time', time.time())
+    })
+
+# ============================================================================
+# End Mobile API Endpoints
+# ============================================================================
+
+
 if __name__ == '__main__':
     PORT = 8000
     
@@ -3320,18 +3845,50 @@ if __name__ == '__main__':
     print(f"   All programs stored in: {os.path.abspath('data/programs')}")
     print("   Navigate and run commands directly in uploaded projects")
     
+    print("\n🤖 AIAGENTSTORAGE API:")
+    print("   GET  /api/aiagentstorage/info   - System information")
+    print("   GET  /api/aiagentstorage/list   - List directory contents")
+    print("   GET  /api/aiagentstorage/read   - Read file contents")
+    print("   POST /api/aiagentstorage/write  - Write file")
+    print("   DELETE /api/aiagentstorage/delete - Delete file/directory")
+    print("   POST /api/aiagentstorage/mkdir  - Create directory")
+    print("   GET  /api/aiagentstorage/exists - Check if path exists")
+    print("   GET  /api/aiagentstorage/tree   - Get directory tree")
+    print(f"   Base path: {AIAGENTSTORAGE_BASE}")
+    
     print("\n🌐 Ngrok Integration:")
     print("   Use the web interface to start a public tunnel")
     print("   This will make your server accessible from anywhere!")
     print("\n⚠️  SECURITY WARNING: Server is accessible from your home network!")
     print("   Ngrok tunnel will make it accessible from ANYWHERE on the internet!")
     print("   Only use this in a trusted environment.")
+
+    # Auto-start persistent tunnel for mobile access
+    print("\n📱 Mobile Access Setup:")
+    # To prevent accidental cloudflared installation/attempts during tests,
+    # allow disabling auto-start via environment variable DISABLE_TUNNEL_AUTO=1
+    if os.environ.get('DISABLE_TUNNEL_AUTO') != '1':
+        print("   Starting persistent Cloudflare tunnel for mobile app...")
+        tunnel_result = persistent_tunnel.start_tunnel(port=PORT)
+        if tunnel_result.get('success'):
+            print(f"   ✅ Mobile tunnel active: {tunnel_result.get('url')}")
+            print(f"   📱 Use this URL in your mobile app")
+            print(f"   🔒 Tunnel is hidden and secure (no public listing)")
+        else:
+            print(f"   ⚠️  Tunnel not started: {tunnel_result.get('message')}")
+            print(f"   💡 Install cloudflared: wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && sudo dpkg -i cloudflared-linux-amd64.deb")
+    else:
+        print("   Auto-start of tunnel suppressed by DISABLE_TUNNEL_AUTO=1")
+
     print("\n💡 Tip: Press Ctrl+C to stop the server")
     print("="*60 + "\n")
     
     # Create data directory if it doesn't exist
     os.makedirs('data', exist_ok=True)
     
+    # Store app start time
+    app._start_time = time.time()
+
     try:
         app.run(host='0.0.0.0', port=PORT, debug=True, use_reloader=False)
     except KeyboardInterrupt:
@@ -3340,3 +3897,4 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"\n❌ Server error: {e}")
         sys.exit(1)
+

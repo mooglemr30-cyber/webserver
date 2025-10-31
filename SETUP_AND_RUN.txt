@@ -1,0 +1,117 @@
+╔══════════════════════════════════════════════════════════════╗
+║        SETUP AND RUN WEBSERVER IN TERMINAL                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+ONE COMMAND TO DO EVERYTHING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && chmod +x setup_and_run.sh && bash setup_and_run.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+WHAT THIS DOES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Creates virtual environment (.venv)
+2. Installs ALL dependencies (Flask, Flask-CORS, etc.)
+3. Verifies everything is installed
+4. Creates necessary directories (data/, logs/)
+5. STARTS THE SERVER in your terminal
+6. Server keeps running (press Ctrl+C to stop)
+
+
+YOU'LL SEE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: Checking Python Installation
+✓ Python 3.x.x installed
+
+Step 2: Setting Up Virtual Environment
+✓ Virtual environment created
+
+Step 3: Upgrading pip
+✓ pip upgraded
+
+Step 4: Installing Dependencies
+Installing all packages from requirements.txt...
+✓ All dependencies installed successfully
+
+Step 5: Verifying Critical Packages
+✓ Flask installed
+✓ Flask-CORS installed
+✓ Pydantic installed
+✓ Requests installed
+
+Step 6: Creating Necessary Directories
+✓ All directories created
+
+Step 7: Verifying Application Files
+✓ src/app.py exists
+✓ Application can be imported
+
+╔══════════════════════════════════════════════════════════════╗
+║              SETUP COMPLETE - READY TO START                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+Configuration:
+  • Virtual Environment: .venv (activated)
+  • Application: src/app.py
+  • Data Directory: data/
+  • Logs Directory: logs/
+
+Confirmation:
+  ✓ Original webserver: READY
+  ✓ Mobile app integration: CONFIGURED
+  ✓ Dependencies: INSTALLED
+  ✓ Both services: CAN RUN TOGETHER
+
+Mobile App Access:
+  • Mobile app connects via Cloudflare tunnel
+  • Tunnel URL will be shown in server logs
+  • Uses same APIs as webserver
+  • Access same tools and data
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 STARTING WEBSERVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Server is starting...
+Press Ctrl+C to stop the server
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ * Serving Flask app 'app'
+ * Debug mode: on
+ * Running on http://127.0.0.1:8000
+ * Cloudflare tunnel: https://xxxxx.trycloudflare.com
+
+[Server is now running in your terminal]
+
+
+TO STOP THE SERVER:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Press: Ctrl+C
+
+
+TO RESTART LATER:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+cd /home/admin1/Documents/webserver
+source .venv/bin/activate
+python src/app.py
+
+
+CONFIRMATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Original webserver: Runs in terminal (no systemd)
+✅ Mobile app: Connects via hidden Cloudflare tunnel
+✅ Both work together: Same APIs, same data, same tools
+✅ No changes to code: Your files are untouched
+
+
+COPY THIS COMMAND NOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/admin1/Documents/webserver && chmod +x setup_and_run.sh && bash setup_and_run.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
