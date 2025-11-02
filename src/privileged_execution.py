@@ -15,6 +15,12 @@ Security Model:
 - All commands logged with timestamps
 - Output shared for learning purposes
 - Rate limiting and command validation
+
+SECURITY NOTE: This module intentionally stores the passphrase in clear text
+for authorized AI agent access. Files are protected with 0o600 permissions
+(owner read/write only). This is a design decision for the trusted AI agent
+system. If this doesn't meet your security requirements, disable privileged
+execution entirely or implement a more restrictive access control system.
 """
 
 import os
@@ -73,7 +79,12 @@ class PrivilegedCommandSystem:
         passphrase = secrets.token_urlsafe(32)
         passphrase_hash = hashlib.sha256(passphrase.encode()).hexdigest()
         
-        with open(self.passphrase_file, 'w') as f:
+        # Store with secure file permissions (owner read/write only)
+        # NOTE: Passphrase stored intentionally for trusted AI agent retrieval
+        with os.fdopen(
+            os.open(str(self.passphrase_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600),
+            'w'
+        ) as f:
             json.dump({
                 'passphrase_hash': passphrase_hash,
                 'created_at': datetime.now().isoformat(),
@@ -82,11 +93,18 @@ class PrivilegedCommandSystem:
             }, f, indent=2)
         
         # Also save to credentials directory if configured via environment variable
+        # NOTE: This intentionally stores the passphrase for trusted AI agent access
+        # The file is protected with restrictive permissions (0o600)
         token_dir_env = os.getenv('CREDENTIALS_DIR')
         if token_dir_env:
             token_dir = Path(token_dir_env)
             if token_dir.exists():
-                with open(token_dir / "PRIVILEGED_PASSPHRASE.txt", 'w') as f:
+                passphrase_file = token_dir / "PRIVILEGED_PASSPHRASE.txt"
+                # Create file with secure permissions (owner read/write only)
+                with os.fdopen(
+                    os.open(str(passphrase_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 
+                    'w'
+                ) as f:
                     f.write(f"PRIVILEGED SUDO PASSPHRASE\n")
                     f.write(f"=" * 50 + "\n\n")
                     f.write(f"Generated: {datetime.now().isoformat()}\n\n")
@@ -95,7 +113,7 @@ class PrivilegedCommandSystem:
                     f.write(f"Only share with TRUSTED AI agents and tools.\n\n")
                     f.write(f"Usage:\n")
                     f.write(f"  POST /api/privileged/execute\n")
-                    f.write(f"  Headers: X-Privileged-Passphrase: {passphrase}\n")
+                    f.write(f"  Headers: X-Privileged-Passphrase: <passphrase>\n")
                     f.write(f"  Body: {{\"command\": \"your sudo command\"}}\n")
         
         return passphrase_hash
