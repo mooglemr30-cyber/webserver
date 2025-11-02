@@ -2272,6 +2272,171 @@ def get_storage_info_v2():
             'error': str(e)
         }), 500
 
+# V1 File API Compatibility Routes (for frontend)
+@app.route('/api/files/upload', methods=['POST'])
+def upload_files_v1():
+    """V1 compatibility wrapper for file upload."""
+    return upload_files_v2()
+
+@app.route('/api/files/list', methods=['GET'])
+def list_files_v1():
+    """V1 compatibility wrapper for listing files."""
+    return list_files_v2()
+
+@app.route('/api/files/download/<filename>', methods=['GET'])
+def download_file_v1(filename):
+    """V1 compatibility wrapper for file download."""
+    return download_file_v2(filename)
+
+@app.route('/api/files/delete/<filename>', methods=['DELETE'])
+def delete_file_v1(filename):
+    """V1 compatibility wrapper for file deletion."""
+    return delete_file_v2(filename)
+
+@app.route('/api/files/storage', methods=['GET'])
+def get_storage_info_v1():
+    """V1 compatibility wrapper for storage info."""
+    return get_storage_info_v2()
+
+# V1 Tunnel API Routes (for frontend)
+@app.route('/api/ngrok/start', methods=['POST'])
+def api_start_ngrok_v1():
+    """Start ngrok tunnel."""
+    try:
+        success = start_ngrok_tunnel()
+        status = get_ngrok_status()
+        
+        return jsonify({
+            'success': success,
+            'status': status['status'],
+            'public_url': status['public_url'],
+            'message': 'Ngrok tunnel started' if success else 'Failed to start ngrok',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ngrok/stop', methods=['POST'])
+def api_stop_ngrok_v1():
+    """Stop ngrok tunnel."""
+    try:
+        success = stop_ngrok_tunnel()
+        
+        return jsonify({
+            'success': success,
+            'message': 'Ngrok tunnel stopped' if success else 'Failed to stop ngrok',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ngrok/status', methods=['GET'])
+def api_ngrok_status_v1():
+    """Get ngrok tunnel status."""
+    try:
+        status = get_ngrok_status()
+        return jsonify({
+            'success': True,
+            'status': status['status'],
+            'public_url': status['public_url'],
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/cloudflared/start', methods=['POST'])
+def api_start_cloudflared_v1():
+    """Start cloudflared tunnel."""
+    try:
+        success = start_cloudflared_tunnel()
+        
+        return jsonify({
+            'success': success,
+            'status': tunnel_info.get('cloudflared', {}).get('status', 'unknown'),
+            'public_url': tunnel_info.get('cloudflared', {}).get('public_url'),
+            'message': 'Cloudflared tunnel started' if success else 'Failed to start cloudflared',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/cloudflared/stop', methods=['POST'])
+def api_stop_cloudflared_v1():
+    """Stop cloudflared tunnel."""
+    try:
+        success = stop_cloudflared_tunnel()
+        
+        return jsonify({
+            'success': success,
+            'message': 'Cloudflared tunnel stopped' if success else 'Failed to stop cloudflared',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/tunnels/status', methods=['GET'])
+def api_all_tunnels_status_v1():
+    """Get status of all tunnels."""
+    try:
+        ngrok_status = get_ngrok_status()
+        cloudflared_status = {
+            'status': tunnel_info.get('cloudflared', {}).get('status', 'stopped'),
+            'public_url': tunnel_info.get('cloudflared', {}).get('public_url')
+        }
+        # Also check persistent tunnel
+        persistent_status = persistent_tunnel.get_status()
+        
+        return jsonify({
+            'success': True,
+            'tunnels': {
+                'ngrok': ngrok_status,
+                'cloudflared': cloudflared_status,
+                'persistent': persistent_status.get('data', {})
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/tunnels/stop-all', methods=['POST'])
+def api_stop_all_tunnels_v1():
+    """Stop all running tunnels."""
+    try:
+        results = {}
+        results['ngrok'] = stop_ngrok_tunnel()
+        results['cloudflared'] = stop_cloudflared_tunnel()
+        persistent_tunnel.stop_tunnel()
+        
+        return jsonify({
+            'success': True,
+            'message': 'All tunnels stopped',
+            'results': results,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 # Tunnel Management Routes
 @app.route('/api/v2/ngrok/start', methods=['POST'])
 def api_start_ngrok_v2():
@@ -4018,8 +4183,11 @@ if __name__ == '__main__':
     # Store app start time
     app._start_time = time.time()
 
+    # Get host from environment, default to localhost only
+    HOST = os.environ.get('FLASK_HOST', '127.0.0.1')
+    
     try:
-        app.run(host='0.0.0.0', port=PORT, debug=True, use_reloader=False)
+        app.run(host=HOST, port=PORT, debug=True, use_reloader=False)
     except KeyboardInterrupt:
         print("\n\n👋 Shutting down server gracefully...")
         sys.exit(0)
