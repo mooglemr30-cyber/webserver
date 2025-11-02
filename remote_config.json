@@ -1,0 +1,23 @@
+{
+  "remote_host": "192.168.1.29",
+  "remote_user": "pearce",
+  "remote_port": 22,
+  "auth_method": "key",
+  "sudo_user": "pearce",
+  "sudo_password_env": "REMOTE_SUDO_PASSWORD",
+  "sudo_password_hint": "Set REMOTE_SUDO_PASSWORD=pearce when invoking remote_setup.sh",
+  "project_root_remote": "/home/pearce/webserver",
+  "agent_storage_path_remote": "/home/admin1/Documents/AIAGENTSTORAGE",
+  "agent_memory_path_remote": "/home/admin1/aimemory",
+  "env_overrides": {
+    "AGENT_STORAGE_PATH": "/home/admin1/Documents/AIAGENTSTORAGE",
+    "AGENT_MEMORY_PATH": "/home/admin1/aimemory"
+  },
+  "services": [
+    {
+      "name": "webserver",
+      "start_cmd": "python3 src/app.py",
+      "health_url": "http://localhost:8000/health"
+    }
+  ]
+}

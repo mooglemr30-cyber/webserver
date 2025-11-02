@@ -1,6 +1,61 @@
-#!/bin/bash
-# Complete setup and run script for webserver
-# Installs all dependencies and starts server in terminal
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Enhanced setup and run script supporting optional remote deployment.
+# If REMOTE_HOST environment variable is set, offers remote sync option.
+
+LOCAL_ONLY=${LOCAL_ONLY:-false}
+PROJECT_ROOT="$(pwd)"
+
+if [[ -f .env.remote ]]; then
+    # shellcheck disable=SC1091
+    source .env.remote || true
+fi
+
+REMOTE_CFG="remote_config.json"
+
+use_remote=false
+if [[ -n "${REMOTE_HOST:-}" ]]; then
+    use_remote=true
+elif [[ -f "$REMOTE_CFG" ]]; then
+    # Try read host/user from config if env not present
+    if command -v jq >/dev/null 2>&1; then
+        host=$(jq -r '.remote_host' "$REMOTE_CFG")
+        user=$(jq -r '.remote_user' "$REMOTE_CFG")
+        if [[ "$host" != "null" && -n "$host" ]]; then
+            REMOTE_HOST="$host"; REMOTE_USER="$user"; use_remote=true
+        fi
+    fi
+fi
+
+if [[ "$LOCAL_ONLY" == "true" ]]; then
+    use_remote=false
+fi
+
+echo "== Setup (local) =="
+if [[ ! -d .venv ]]; then
+    echo "[Setup] Creating virtual environment" 
+    python3 -m venv .venv
+fi
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+
+if [[ "$use_remote" == "true" ]]; then
+    echo "== Remote sync enabled =="
+    if ! command -v rsync >/dev/null 2>&1; then
+        echo "rsync not installed locally; remote sync skipped" >&2
+    else
+        echo "[Remote] Syncing project to $REMOTE_USER@$REMOTE_HOST"
+        RSYNC_EXCLUDES=(".venv" "__pycache__" "node_modules" "logs" ".git")
+        EXC=()
+        for ex in "${RSYNC_EXCLUDES[@]}"; do EXC+=(--exclude "$ex"); done
+        rsync -az "${EXC[@]}" ./ "$REMOTE_USER@$REMOTE_HOST:${REMOTE_PROJECT_ROOT:-/home/$REMOTE_USER/webserver}" || echo "[Remote] rsync failed" >&2
+    fi
+fi
+
+echo "[Run] Starting application locally" 
+python src/app.py
 
 set -e
 

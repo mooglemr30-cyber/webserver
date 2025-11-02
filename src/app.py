@@ -59,10 +59,14 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 CORS(app)  # Enable CORS for all routes
 
-# Initialize authentication manager
+from path_config import PATHS  # centralized paths
+from document_scanner import DocumentScanner
+
+# Initialize authentication manager using centralized path
+_users_file = os.path.join(PATHS['data'], 'users.json')
 auth_manager = AuthenticationManager(
     secret_key=app.config['SECRET_KEY'],
-    users_file='data/users.json'
+    users_file=_users_file
 )
 
 # Create authentication decorators
@@ -72,10 +76,16 @@ login_required, role_required, admin_required = create_auth_decorators(auth_mana
 data_store = DataStore()
 file_store = FileStore()
 program_store = ProgramStore()
+
+# Log key paths once at startup (stdout) for diagnostics
+print(json.dumps({'event': 'path-config', 'paths': {k: v for k, v in PATHS.items()}}, ensure_ascii=False))
 cache = CacheManager(use_redis=False)
 
 # Initialize persistent tunnel manager for mobile access
 persistent_tunnel = PersistentTunnelManager()
+scanner = DocumentScanner()
+_scan_lock = threading.Lock()
+_last_scan_report = None
 
 # Global variables to store tunnel info
 tunnel_info = {
@@ -224,6 +234,54 @@ def _structured_log(resp):
 @app.get('/api/v1/health')
 def v1_health():
     return api_ok({'status': 'healthy'})
+
+# ---------------------------
+# AI Document Scan Endpoints
+# ---------------------------
+
+@app.post('/api/ai/scan')
+def ai_scan():
+    """Trigger a document scan of agent storage.
+    Optional JSON body: {"max_files": 100}
+    """
+    global _last_scan_report
+    try:
+        payload = request.get_json(silent=True) or {}
+        max_files = payload.get('max_files')
+        with _scan_lock:
+            if max_files:
+                scanner.max_files = int(max_files)
+            report = scanner.scan()
+            _last_scan_report = report
+        return api_ok({'scan_report': report, 'summary': report.get('summary')})
+    except Exception as e:
+        return api_error(f'Scan failed: {e}', 500)
+
+@app.get('/api/ai/scan/status')
+def ai_scan_status():
+    try:
+        return api_ok({'last_report': _last_scan_report, 'configured_base': PATHS.get('agent_storage')})
+    except Exception as e:
+        return api_error(f'Status failed: {e}', 500)
+
+@app.post('/api/ai/scan/full')
+def ai_scan_full():
+    """Perform a full multi-root scan: AIAGENTSTORAGE + project base + data dir.
+    Optional JSON body: {"max_files": 500}
+    """
+    global _last_scan_report
+    try:
+        payload = request.get_json(silent=True) or {}
+        max_files = payload.get('max_files')
+        with _scan_lock:
+            if max_files:
+                scanner.max_files = int(max_files)
+            roots = [PATHS.get('agent_storage'), PATHS.get('base'), PATHS.get('data')]
+            report = scanner.scan_multi(roots)
+            _last_scan_report = report
+        return api_ok({'scan_report': report, 'summary': report.get('summary')})
+    except Exception as e:
+        return api_error(f'Full scan failed: {e}', 500)
 
 # ---------------------------
 # Authentication Endpoints
@@ -3201,8 +3259,11 @@ def privileged_info():
 
 # ==================== AIAGENTSTORAGE API ====================
 
-# AIAGENTSTORAGE base path
-AIAGENTSTORAGE_BASE = "/run/media/admin1/1E1EC1FE1EC1CF491/to delete/AIAGENTSTORAGE"
+# AIAGENTSTORAGE base path (use centralized path configuration)
+# Previously hard-coded to external media mount. Now derives from PATHS so it can
+# be overridden by AGENT_STORAGE_PATH env var and kept consistent across modules.
+from path_config import PATHS as _PATHS_INTERNAL  # safe re-import; already imported above
+AIAGENTSTORAGE_BASE = _PATHS_INTERNAL.get('agent_storage')
 
 def is_safe_path(base_path, path, follow_symlinks=True):
     """Check if path is within base_path (security check)."""
@@ -3739,7 +3800,9 @@ def aiagentstorage_tree():
 def mobile_tunnel_start():
     """Start persistent tunnel for mobile access."""
     try:
-        result = persistent_tunnel.start_tunnel(port=8000)
+        # Use the currently configured server port instead of hardcoded 8000
+        port = app.config.get('SERVER_PORT') or int(os.environ.get('PORT', '8000'))
+        result = persistent_tunnel.start_tunnel(port=port)
         return api_ok(result)
     except Exception as e:
         return api_error(f"Failed to start tunnel: {str(e)}", status=500)
@@ -3796,13 +3859,38 @@ def health_check():
 
 
 if __name__ == '__main__':
-    PORT = 8000
-    
-    # Ensure port is available before starting
-    if not ensure_port_available(PORT):
-        print(f"\n❌ Cannot start server - port {PORT} is still in use")
+    def _extract_cli_port(argv):
+        """Extract --port or --port=XXXX from CLI args if present."""
+        for i, a in enumerate(argv):
+            if a.startswith('--port='):
+                return a.split('=', 1)[1]
+            if a == '--port' and i + 1 < len(argv):
+                return argv[i+1]
+        return None
+
+    requested_port = os.environ.get('PORT') or _extract_cli_port(sys.argv) or '8000'
+
+    # Candidate list: user requested first, then common fallbacks
+    _candidates = []
+    try:
+        _candidates.append(int(requested_port))
+    except ValueError:
+        print(f"⚠️  Invalid PORT value '{requested_port}', falling back to defaults")
+    for c in (8000, 8080, 5000, 3000, 9000):
+        if c not in _candidates:
+            _candidates.append(c)
+
+    PORT = None
+    for cand in _candidates:
+        if ensure_port_available(cand):
+            PORT = cand
+            break
+    if PORT is None:
+        print("❌ No available port found from candidates: " + ', '.join(map(str, _candidates)))
         sys.exit(1)
-    
+
+    os.environ['PORT'] = str(PORT)  # normalize
+    app.config['SERVER_PORT'] = PORT
     local_ip = get_local_ip()
     
     print("\n" + "="*60)

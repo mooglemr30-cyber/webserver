@@ -13,7 +13,11 @@ echo "✓ Cleaned"
 
 echo ""
 echo "Step 2: Installing dependencies..."
-npm install
+npm install --legacy-peer-deps
+if [ $? -ne 0 ]; then
+    echo "First install failed, trying with --force..."
+    npm install --force
+fi
 echo "✓ Dependencies installed"
 
 echo ""

@@ -1,0 +1,223 @@
+{
+  "exported_at": "2025-10-31T05:49:15.912987+00:00",
+  "backend": "TinyDB",
+  "collections": {
+    "conversations": [
+      {
+        "conversation_id": "conv_001",
+        "user_message": "How do I set up MongoDB for AI intelligence?",
+        "ai_response": "You can use the AI Intelligence Manager which supports both MongoDB and TinyDB...",
+        "timestamp": "2025-10-31T04:13:30.628627+00:00",
+        "metadata": {
+          "source": "copilot-chat",
+          "session": "demo"
+        }
+      },
+      {
+        "conversation_id": "conv_001",
+        "user_message": "How do I set up MongoDB for AI intelligence?",
+        "ai_response": "You can use the AI Intelligence Manager which supports both MongoDB and TinyDB...",
+        "timestamp": "2025-10-31T04:19:20.861267+00:00",
+        "metadata": {
+          "source": "copilot-chat",
+          "session": "demo"
+        }
+      },
+      {
+        "conversation_id": "conv_001",
+        "user_message": "How do I set up MongoDB for AI intelligence?",
+        "ai_response": "You can use the AI Intelligence Manager which supports both MongoDB and TinyDB...",
+        "timestamp": "2025-10-31T05:49:15.899200+00:00",
+        "metadata": {
+          "source": "copilot-chat",
+          "session": "demo"
+        }
+      }
+    ],
+    "context": [
+      {
+        "key": "project_setup",
+        "data": {
+          "project_name": "webserver",
+          "language": "python",
+          "database": "mongodb/tinydb",
+          "features": [
+            "ai_intelligence",
+            "copilot_memory"
+          ]
+        },
+        "tags": [
+          "setup",
+          "configuration"
+        ],
+        "timestamp": "2025-10-31T05:49:15.900804+00:00",
+        "updated_at": "2025-10-31T05:49:15.900826+00:00"
+      }
+    ],
+    "learnings": [
+      {
+        "topic": "MongoDB Setup",
+        "content": "MongoDB can be replaced with TinyDB for simpler deployments without a separate database server",
+        "importance": 5,
+        "tags": [
+          "database",
+          "deployment",
+          "best-practices"
+        ],
+        "timestamp": "2025-10-31T04:13:30.631458+00:00",
+        "access_count": 0
+      },
+      {
+        "topic": "AI Memory Management",
+        "content": "Use the Copilot Memory extension to persist context across sessions",
+        "importance": 4,
+        "tags": [
+          "ai",
+          "memory",
+          "best-practices"
+        ],
+        "timestamp": "2025-10-31T04:13:30.632838+00:00",
+        "access_count": 0
+      },
+      {
+        "topic": "MongoDB Setup",
+        "content": "MongoDB can be replaced with TinyDB for simpler deployments without a separate database server",
+        "importance": 5,
+        "tags": [
+          "database",
+          "deployment",
+          "best-practices"
+        ],
+        "timestamp": "2025-10-31T04:19:20.868318+00:00",
+        "access_count": 0
+      },
+      {
+        "topic": "AI Memory Management",
+        "content": "Use the Copilot Memory extension to persist context across sessions",
+        "importance": 4,
+        "tags": [
+          "ai",
+          "memory",
+          "best-practices"
+        ],
+        "timestamp": "2025-10-31T04:19:20.869832+00:00",
+        "access_count": 0
+      },
+      {
+        "topic": "MongoDB Setup",
+        "content": "MongoDB can be replaced with TinyDB for simpler deployments without a separate database server",
+        "importance": 5,
+        "tags": [
+          "database",
+          "deployment",
+          "best-practices"
+        ],
+        "timestamp": "2025-10-31T05:49:15.902491+00:00",
+        "access_count": 0
+      },
+      {
+        "topic": "AI Memory Management",
+        "content": "Use the Copilot Memory extension to persist context across sessions",
+        "importance": 4,
+        "tags": [
+          "ai",
+          "memory",
+          "best-practices"
+        ],
+        "timestamp": "2025-10-31T05:49:15.903883+00:00",
+        "access_count": 0
+      }
+    ],
+    "memories": [
+      {
+        "type": "project_state",
+        "content": {
+          "last_action": "setup_ai_intelligence",
+          "completed_tasks": [
+            "install_pymongo",
+            "create_ai_module"
+          ],
+          "timestamp": "2025-10-31T17:13:30.634066"
+        },
+        "retention_priority": 3,
+        "timestamp": "2025-10-31T04:13:30.634076+00:00",
+        "access_count": 0,
+        "last_accessed": "2025-10-31T04:13:30.634081+00:00"
+      },
+      {
+        "type": "project_state",
+        "content": {
+          "last_action": "setup_ai_intelligence",
+          "completed_tasks": [
+            "install_pymongo",
+            "create_ai_module"
+          ],
+          "timestamp": "2025-10-31T17:19:20.871198"
+        },
+        "retention_priority": 3,
+        "timestamp": "2025-10-31T04:19:20.871214+00:00",
+        "access_count": 0,
+        "last_accessed": "2025-10-31T04:19:20.871221+00:00"
+      },
+      {
+        "type": "project_state",
+        "content": {
+          "last_action": "setup_ai_intelligence",
+          "completed_tasks": [
+            "install_pymongo",
+            "create_ai_module"
+          ],
+          "timestamp": "2025-10-31T18:49:15.905367"
+        },
+        "retention_priority": 3,
+        "timestamp": "2025-10-31T05:49:15.905382+00:00",
+        "access_count": 0,
+        "last_accessed": "2025-10-31T05:49:15.905390+00:00"
+      }
+    ],
+    "tasks": [
+      {
+        "task_id": "task_001",
+        "description": "Configure MongoDB for production",
+        "status": "pending",
+        "metadata": {
+          "priority": "high",
+          "assigned_to": "ai_agent"
+        },
+        "created_at": "2025-10-31T05:49:15.907228+00:00",
+        "updated_at": "2025-10-31T05:49:15.907258+00:00"
+      },
+      {
+        "task_id": "task_002",
+        "description": "Test AI intelligence integration",
+        "status": "completed",
+        "metadata": {},
+        "created_at": "2025-10-31T05:49:15.908857+00:00",
+        "updated_at": "2025-10-31T05:49:15.910250+00:00"
+      }
+    ],
+    "decisions": [
+      {
+        "context": "Choosing database backend",
+        "decision": "Use TinyDB as fallback when MongoDB unavailable",
+        "reasoning": "Provides resilience and doesn't require external dependencies",
+        "outcome": "successful",
+        "timestamp": "2025-10-31T04:13:30.639143+00:00"
+      },
+      {
+        "context": "Choosing database backend",
+        "decision": "Use TinyDB as fallback when MongoDB unavailable",
+        "reasoning": "Provides resilience and doesn't require external dependencies",
+        "outcome": "successful",
+        "timestamp": "2025-10-31T04:19:20.876655+00:00"
+      },
+      {
+        "context": "Choosing database backend",
+        "decision": "Use TinyDB as fallback when MongoDB unavailable",
+        "reasoning": "Provides resilience and doesn't require external dependencies",
+        "outcome": "successful",
+        "timestamp": "2025-10-31T05:49:15.911456+00:00"
+      }
+    ]
+  }
+}

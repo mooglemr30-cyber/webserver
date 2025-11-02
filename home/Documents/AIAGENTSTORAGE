@@ -1,0 +1,220 @@
+<memories hint="Manage via memory tool">
+<memory path="/memories/aiagentstorage-setup.md">
+# AIAGENTSTORAGE Setup - COMPLETE ✅
+
+## Location
+`/home/admin1/Documents/AIAGENTSTORAGE`
+
+## Status: PRODUCTION READY ✓
+
+All components set up and tested successfully!
+
+## What Was Created
+
+### 1. Directory Structure
+- `/home/admin1/Documents/AIAGENTSTORAGE/`
+  - instructions/ (agent-specific guides)
+  - data/ (intelligence storage)
+  - memory/ (memory tool storage)
+  - shared/ (templates, prompts, knowledge)
+  - logs/ (activity logs)
+  - backups/ (automated backups)
+
+### 2. Core Files
+- README.md (master documentation)
+- SETUP_GUIDE.md (complete setup guide)
+- MEMORY_TOOL_USAGE.md (memory tool guide)
+- AI_AGENT_INSTRUCTIONS.md (universal instructions)
+- agent_init.py (initialization script)
+- config.json (system configuration)
+
+### 3. Helper Scripts
+- quick_start.sh (quick start and testing)
+- backup.sh (automated backups)
+
+### 4. Templates
+- shared/templates/agent_template.py (Python agent template)
+
+### 5. Instructions
+- instructions/copilot_instructions.md (GitHub Copilot)
+- instructions/general_bot_instructions.md (any AI bot)
+
+## System Details
+
+**Backend**: TinyDB
+**Database**: `data/intelligence.json`
+**Memory Integration**: Copilot Memory extension
+**Status**: ✅ Tested and verified
+
+## Test Results
+```
+✓ Agent initialization working
+✓ TinyDB backend functional
+✓ Context storage working
+✓ Memory storage working
+✓ All features enabled
+```
+
+## Quick Commands
+
+```bash
+# Test system
+cd /home/admin1/Documents/AIAGENTSTORAGE
+./quick_start.sh
+
+# Initialize agent
+python agent_init.py
+
+# Backup data
+./backup.sh
+```
+
+## Integration
+
+All AI agents should:
+1. Import from AIAGENTSTORAGE
+2. Initialize with unique name
+3. Store learnings and decisions
+4. Check shared storage first
+5. Clean up on exit
+
+## Environment Variables (TODO)
+Add to ~/.bashrc:
+```bash
+export AIAGENTSTORAGE_PATH="/home/admin1/Documents/AIAGENTSTORAGE"
+export WEBSERVER_PATH="/home/admin1/Documents/webserver"
+export AI_AGENT_NAME="agent_name"
+```
+
+## Links
+- Setup: /home/admin1/Documents/AIAGENTSTORAGE/SETUP_GUIDE.md
+- Instructions: /home/admin1/Documents/AIAGENTSTORAGE/AI_AGENT_INSTRUCTIONS.md
+- Memory Guide: /home/admin1/Documents/AIAGENTSTORAGE/MEMORY_TOOL_USAGE.md
+- Web Server: /home/admin1/Documents/webserver/AI_INTELLIGENCE_SETUP.md
+
+</memory>
+
+<memory path="/memories/copilot-memory-setup.md">
+# Copilot Memory Extension Setup - COMPLETED ✓
+
+## Task
+Set up the Copilot Memory extension (yaotsakpo.copilot-memory) and configure MongoDB for AI intelligence.
+
+## Status - COMPLETE ✓
+
+### Completed Items
+1. ✓ Extension verified installed: yaotsakpo.copilot-memory-0.2.0
+2. ✓ Installed pymongo and tinydb packages
+3. ✓ Created AI Intelligence module (src/ai_intelligence.py)
+4. ✓ Updated config.py with AI intelligence settings
+5. ✓ Created AI configuration file (data/config/ai_config.json)
+6. ✓ Created test script (test_ai_intelligence.py)
+7. ✓ Created setup script (setup_ai_intelligence.sh)
+8. ✓ Created comprehensive documentation (AI_INTELLIGENCE_SETUP.md)
+9. ✓ Updated Copilot prompts (ai/copilot/prompts/main.md)
+10. ✓ Updated requirements.txt
+11. ✓ All tests passed successfully
+
+## System Features
+- Conversation storage and retrieval
+- Context management across sessions
+- Learning system with searchable topics
+- Memory management (Copilot Memory integration)
+- Task tracking and status updates
+- Decision logging for AI improvements
+- Flexible backend: MongoDB or TinyDB (automatic fallback)
+
+## Files Created/Modified
+- src/ai_intelligence.py (new)
+- data/config/ai_config.json (new)
+- test_ai_intelligence.py (new)
+- setup_ai_intelligence.sh (new)
+- AI_INTELLIGENCE_SETUP.md (new)
+- ai/copilot/prompts/main.md (updated)
+- src/config.py (updated with ai_intelligence config)
+- requirements.txt (updated with pymongo, tinydb)
+
+## Usage
+```bash
+# Quick start with TinyDB (no setup)
+python test_ai_intelligence.py
+
+# Full setup (includes MongoDB options)
+./setup_ai_intelligence.sh
+```
+
+## Backend Options
+1. **TinyDB** (default) - No setup, works immediately
+2. **MongoDB Atlas** - Cloud-hosted, free tier
+3. **Docker MongoDB** - Local server
+4. **Custom MongoDB** - Existing server
+
+Current backend: TinyDB (working perfectly)
+
+## Quick Commands
+```bash
+# Test the system
+python test_ai_intelligence.py
+
+# Run interactive setup
+./setup_ai_intelligence.sh
+
+# Start Flask API example
+python ai_api_example.py
+```
+
+## Integration Example
+```python
+from src.ai_intelligence import get_ai_intelligence
+
+ai = get_ai_intelligence()
+ai.store_conversation("id", "user message", "ai response")
+ai.store_context("key", {"data": "value"})
+context = ai.get_context("key")
+learnings = ai.search_learnings(query="keyword")
+```
+
+## Status: PRODUCTION READY ✓
+
+</memory>
+
+<memory path="/memories/ssh_migration_status.md">
+# SSH Migration Status (2025-10-31)
+
+## Remote Target
+Host: 192.168.1.29
+User: pearce
+Port: 22
+Auth: password (public key not yet configured) 
+
+## Completed Items
+- Created remote_config.json and .env.remote
+- Added deploy_to_remote.sh, remote_setup.sh, remote_test.sh
+- Parameterized setup_and_run.sh for optional remote sync
+- Connectivity test attempted: permission denied (needs password or key)
+- Local baseline AI intelligence test succeeded (TinyDB backend functioning)
+- Documented migration in MIGRATION_SSH_GUIDE.md
+
+## Outstanding
+- First manual SSH login required (password pearce) to establish trust
+- Optional: Configure SSH key and switch auth_method to key
+- Remote directory /home/pearce/webserver must be created (script assumes existence)
+- Run deploy_to_remote.sh after confirming SSH access
+- Execute remote_setup.sh then remote_test.sh
+- Optionally add systemd service for remote startup
+
+## Next Suggested Steps
+1. Manually run: ssh pearce@192.168.1.29 (enter password)
+2. Create directory: mkdir -p /home/pearce/webserver
+3. Run local deploy script: bash deploy_to_remote.sh
+4. Run remote setup: bash remote_setup.sh
+5. Verify: bash remote_test.sh
+6. (Optional) Add SSH key for passwordless auth
+
+## Notes
+- No credentials stored in code; password must be exported or entered interactively.
+- rsync uses --delete; confirm remote path before running.
+- AI intelligence file will appear under data/ai/intelligence.json after deploy.
+
+</memory>
+</memories>

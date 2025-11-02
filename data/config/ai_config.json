@@ -1,0 +1,36 @@
+{
+  "ai_intelligence": {
+    "enabled": true,
+    "backend": "auto",
+    "mongodb": {
+      "uri": null,
+      "database": "ai_intelligence",
+      "connection_timeout": 5000,
+      "server_selection_timeout": 5000
+    },
+    "tinydb": {
+      "path": "data/ai/intelligence.json"
+    },
+    "features": {
+      "conversations": true,
+      "context_storage": true,
+      "learning": true,
+      "memory_retention": true,
+      "task_tracking": true,
+      "decision_logging": true
+    },
+    "settings": {
+      "memory_retention_days": 90,
+      "max_memories": 10000,
+      "max_conversations": 5000,
+      "auto_cleanup": true,
+      "export_enabled": true
+    }
+  },
+  "copilot_memory": {
+    "integration_enabled": true,
+    "memory_directory": "/memories",
+    "sync_interval_seconds": 60,
+    "auto_save": true
+  }
+}

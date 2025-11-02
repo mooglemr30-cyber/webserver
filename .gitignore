@@ -115,6 +115,15 @@ dmypy.json
 # Data storage
 data/storage.json
 data/*.json
+data/programs/*/
+data/uploads/
+data/exports/
+
+# Server runtime
+server.out
+server.pid
+nohup.out
 
 # Logs
 *.log
+logs/

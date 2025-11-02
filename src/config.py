@@ -107,6 +107,17 @@ class ConfigManager:
                 'auto_cleanup_enabled': True,
                 'metrics_collection': True,
             },
+            'ai_intelligence': {
+                'enabled': True,
+                'mongodb_uri': None,  # Set to MongoDB URI or leave None for TinyDB fallback
+                'database_name': 'ai_intelligence',
+                'store_conversations': True,
+                'store_context': True,
+                'store_learnings': True,
+                'auto_learning_enabled': True,
+                'memory_retention_days': 90,
+                'max_memories': 10000,
+            },
             'created_at': datetime.now().isoformat(),
             'version': '2.0.0',
         }
