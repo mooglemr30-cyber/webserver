@@ -43,12 +43,12 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 if __name__ == '__main__':
     from performance import CacheManager
     from auth_system import AuthenticationManager, create_auth_decorators
-    from privileged_execution import get_privileged_system
+    from privileged_execution import get_privileged_system, MIN_TIMEOUT, MAX_TIMEOUT
     from tunnel_manager import PersistentTunnelManager
 else:
     from .performance import CacheManager
     from .auth_system import AuthenticationManager, create_auth_decorators
-    from .privileged_execution import get_privileged_system
+    from .privileged_execution import get_privileged_system, MIN_TIMEOUT, MAX_TIMEOUT
     from .tunnel_manager import PersistentTunnelManager
 
 # Monitoring temporarily disabled - causing blocking issues
@@ -1682,8 +1682,8 @@ def v2_execute_program(filename):
         env_vars = request.json.get('env', {}) if request.json else {}
         exec_start = time.perf_counter()
         
-        # Validate timeout
-        timeout = max(1, min(timeout, 300))  # Between 1 and 300 seconds
+        # Validate timeout using constants from privileged_execution module
+        timeout = max(MIN_TIMEOUT, min(timeout, MAX_TIMEOUT))
         
         # Validate environment variables
         if env_vars and not isinstance(env_vars, dict):

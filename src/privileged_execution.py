@@ -40,8 +40,9 @@ from collections import defaultdict
 # Default timeout for commands (5 minutes)
 DEFAULT_TIMEOUT = 300
 
-# Maximum timeout allowed (30 minutes)
-MAX_TIMEOUT = 1800
+# Timeout configuration
+MIN_TIMEOUT = 1
+MAX_TIMEOUT = 1800  # 30 minutes
 
 # Dangerous command patterns that should be blocked
 BLOCKED_COMMAND_PATTERNS = [
@@ -190,13 +191,18 @@ class PrivilegedCommandSystem:
         for pattern in BLOCKED_COMMAND_PATTERNS:
             if re.search(pattern, command, re.IGNORECASE):
                 raise ValueError(
-                    f"Command blocked: contains dangerous pattern {pattern}"
+                    f"Command blocked: contains dangerous pattern"
                 )
         
-        # Validate command doesn't have obvious shell injection attempts
+        # Basic shell syntax validation (not comprehensive, but catches obvious errors)
+        # Note: This is not a complete shell parser and should not be relied upon
+        # for security. The blocked patterns above provide the security layer.
         try:
-            # Try to parse as shell command
-            shlex.split(command.replace('|', ' ').replace('&&', ' ').replace(';', ' '))
+            # Just verify the string can be parsed, even if it contains shell operators
+            # We don't try to remove operators as that could bypass validation
+            tokens = shlex.split(command, posix=True)
+            if not tokens:
+                raise ValueError("Command cannot be empty after parsing")
         except ValueError as e:
             raise ValueError(f"Invalid command syntax: {str(e)}")
     

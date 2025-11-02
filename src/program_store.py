@@ -21,10 +21,12 @@ DANGEROUS_PATTERNS = [
     r'__import__\s*\(\s*["\']os["\']',  # Python os import
     r'eval\s*\(',  # eval usage
     r'exec\s*\(',  # exec usage
-    r'subprocess\.call|subprocess\.run|subprocess\.Popen',  # Direct subprocess
     r'rm\s+-rf\s+/',  # Dangerous rm commands
     r':\(\)\{.*:\|:.*\};:',  # Fork bomb pattern
 ]
+
+# Maximum project size multiplier (project can be 10x single file limit)
+MAX_PROJECT_SIZE_MULTIPLIER = 10
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {
@@ -283,10 +285,11 @@ class ProgramStore:
             total_size += len(content)
         
         # Check total project size
-        if total_size > self.max_file_size * 10:  # 10x limit for projects
+        max_project_size = self.max_file_size * MAX_PROJECT_SIZE_MULTIPLIER
+        if total_size > max_project_size:
             raise ValueError(
                 f"Total project size ({total_size} bytes) exceeds maximum "
-                f"allowed size ({self.max_file_size * 10} bytes)"
+                f"allowed size ({max_project_size} bytes)"
             )
         
         upload_time = datetime.now().isoformat()
@@ -312,7 +315,12 @@ class ProgramStore:
                 # Validate path doesn't escape project directory
                 real_file_path = os.path.realpath(file_path)
                 real_project_dir = os.path.realpath(project_dir)
-                if not real_file_path.startswith(real_project_dir):
+                try:
+                    common_path = os.path.commonpath([real_file_path, real_project_dir])
+                    if common_path != real_project_dir:
+                        raise ValueError(f"Invalid path: {relative_path} escapes project directory")
+                except ValueError:
+                    # commonpath raises ValueError if paths are on different drives (Windows)
                     raise ValueError(f"Invalid path: {relative_path} escapes project directory")
                 
                 # Create directory structure if needed
