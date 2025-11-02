@@ -12,5 +12,19 @@
     "uploaded_at": "2025-10-29T07:15:23.168568",
     "hash": "eede568bf6273d2594c79092d7cd543bf7602097f42a520b7ed8cb5fc604df52",
     "mime_type": "application/pdf"
+  },
+  "test_file.txt": {
+    "original_name": "test_file.txt",
+    "size": 18,
+    "uploaded_at": "2025-11-02T22:04:52.120262",
+    "hash": "d90ef1651fd9e7563e1a1450a16bd784e9a7e2d3df0f5a798dfc1bdf70a64aea",
+    "mime_type": "text/plain"
+  },
+  "ai-memory-manager.py": {
+    "original_name": "ai-memory-manager.py",
+    "size": 17369,
+    "uploaded_at": "2025-11-03T00:41:21.366831",
+    "hash": "718897d3331bf051ca951be728dac013c9680a689db9be032756cf3a105594d3",
+    "mime_type": "application/octet-stream"
   }
 }

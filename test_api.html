@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test Page</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .test { margin: 20px 0; padding: 15px; background: #2d2d2d; border-radius: 8px; }
+        button { background: #007acc; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #005a9e; }
+        .output { background: #000; padding: 10px; border-radius: 4px; margin-top: 10px; white-space: pre-wrap; }
+        .success { color: #00ff00; }
+        .error { color: #ff6b35; }
+    </style>
+</head>
+<body>
+    <h1>🧪 API Test Page</h1>
+
+    <div class="test">
+        <h2>Test 1: List Programs</h2>
+        <button onclick="testListPrograms()">Test /api/programs/list</button>
+        <div id="list-output" class="output"></div>
+    </div>
+
+    <div class="test">
+        <h2>Test 2: Upload Program</h2>
+        <input type="file" id="upload-file">
+        <input type="text" id="upload-desc" placeholder="Description">
+        <button onclick="testUploadProgram()">Test /api/programs/upload</button>
+        <div id="upload-output" class="output"></div>
+    </div>
+
+    <div class="test">
+        <h2>Test 3: List Files</h2>
+        <button onclick="testListFiles()">Test /api/files/list</button>
+        <div id="files-output" class="output"></div>
+    </div>
+
+    <div class="test">
+        <h2>Test 4: Upload File</h2>
+        <input type="file" id="file-upload">
+        <button onclick="testUploadFile()">Test /api/files/upload</button>
+        <div id="file-upload-output" class="output"></div>
+    </div>
+
+    <script>
+        async function testListPrograms() {
+            const output = document.getElementById('list-output');
+            output.textContent = 'Loading...';
+            try {
+                const response = await fetch('/api/programs/list');
+                const data = await response.json();
+                output.innerHTML = `<span class="success">✓ Success</span>\n` + 
+                    JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.innerHTML = `<span class="error">✗ Error:</span>\n${error.message}`;
+            }
+        }
+
+        async function testUploadProgram() {
+            const output = document.getElementById('upload-output');
+            const fileInput = document.getElementById('upload-file');
+            const descInput = document.getElementById('upload-desc');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                output.innerHTML = '<span class="error">Please select a file</span>';
+                return;
+            }
+            
+            output.textContent = 'Uploading...';
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('description', descInput.value || '');
+                
+                const response = await fetch('/api/programs/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                output.innerHTML = `<span class="success">✓ Success</span>\n` + 
+                    JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.innerHTML = `<span class="error">✗ Error:</span>\n${error.message}`;
+            }
+        }
+
+        async function testListFiles() {
+            const output = document.getElementById('files-output');
+            output.textContent = 'Loading...';
+            try {
+                const response = await fetch('/api/files/list');
+                const data = await response.json();
+                output.innerHTML = `<span class="success">✓ Success</span>\n` + 
+                    JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.innerHTML = `<span class="error">✗ Error:</span>\n${error.message}`;
+            }
+        }
+
+        async function testUploadFile() {
+            const output = document.getElementById('file-upload-output');
+            const fileInput = document.getElementById('file-upload');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                output.innerHTML = '<span class="error">Please select a file</span>';
+                return;
+            }
+            
+            output.textContent = 'Uploading...';
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                const response = await fetch('/api/files/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                output.innerHTML = `<span class="success">✓ Success</span>\n` + 
+                    JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.innerHTML = `<span class="error">✗ Error:</span>\n${error.message}`;
+            }
+        }
+
+        // Test on page load
+        window.onload = () => {
+            testListPrograms();
+        };
+    </script>
+</body>
+</html>

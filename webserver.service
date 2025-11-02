@@ -1,0 +1,21 @@
+[Unit]
+Description=Flask Web Server with AI Intelligence
+After=network.target
+
+[Service]
+Type=simple
+User=admin1
+WorkingDirectory=/home/admin1/Documents/webserver
+Environment="PATH=/home/admin1/Documents/webserver/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/admin1/Documents/webserver/.venv/bin/python3 /home/admin1/Documents/webserver/src/app.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/admin1/Documents/webserver/logs/webserver.log
+StandardError=append:/home/admin1/Documents/webserver/logs/webserver-error.log
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

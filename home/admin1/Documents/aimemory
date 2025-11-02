@@ -1,0 +1,328 @@
+<memories hint="Manage via memory tool">
+<memory path="/memories/aiagentstorage-setup.md">
+# AIAGENTSTORAGE Setup - COMPLETE ✅
+
+## Location
+`/home/admin1/Documents/AIAGENTSTORAGE`
+
+## Status: PRODUCTION READY ✓
+
+All components set up and tested successfully!
+
+## What Was Created
+
+### 1. Directory Structure
+- `/home/admin1/Documents/AIAGENTSTORAGE/`
+  - instructions/ (agent-specific guides)
+  - data/ (intelligence storage)
+  - memory/ (memory tool storage)
+  - shared/ (templates, prompts, knowledge)
+  - logs/ (activity logs)
+  - backups/ (automated backups)
+
+### 2. Core Files
+- README.md (master documentation)
+- SETUP_GUIDE.md (complete setup guide)
+- MEMORY_TOOL_USAGE.md (memory tool guide)
+- AI_AGENT_INSTRUCTIONS.md (universal instructions)
+- agent_init.py (initialization script)
+- config.json (system configuration)
+
+### 3. Helper Scripts
+- quick_start.sh (quick start and testing)
+- backup.sh (automated backups)
+
+### 4. Templates
+- shared/templates/agent_template.py (Python agent template)
+
+### 5. Instructions
+- instructions/copilot_instructions.md (GitHub Copilot)
+- instructions/general_bot_instructions.md (any AI bot)
+
+## System Details
+
+**Backend**: TinyDB
+**Database**: `data/intelligence.json`
+**Memory Integration**: Copilot Memory extension
+**Status**: ✅ Tested and verified
+
+## Test Results
+```
+✓ Agent initialization working
+✓ TinyDB backend functional
+✓ Context storage working
+✓ Memory storage working
+✓ All features enabled
+```
+
+## Quick Commands
+
+```bash
+# Test system
+cd /home/admin1/Documents/AIAGENTSTORAGE
+./quick_start.sh
+
+# Initialize agent
+python agent_init.py
+
+# Backup data
+./backup.sh
+```
+
+## Integration
+
+All AI agents should:
+1. Import from AIAGENTSTORAGE
+2. Initialize with unique name
+3. Store learnings and decisions
+4. Check shared storage first
+5. Clean up on exit
+
+## Environment Variables (TODO)
+Add to ~/.bashrc:
+```bash
+export AIAGENTSTORAGE_PATH="/home/admin1/Documents/AIAGENTSTORAGE"
+export WEBSERVER_PATH="/home/admin1/Documents/webserver"
+export AI_AGENT_NAME="agent_name"
+```
+
+## Links
+- Setup: /home/admin1/Documents/AIAGENTSTORAGE/SETUP_GUIDE.md
+- Instructions: /home/admin1/Documents/AIAGENTSTORAGE/AI_AGENT_INSTRUCTIONS.md
+- Memory Guide: /home/admin1/Documents/AIAGENTSTORAGE/MEMORY_TOOL_USAGE.md
+- Web Server: /home/admin1/Documents/webserver/AI_INTELLIGENCE_SETUP.md
+
+</memory>
+
+<memory path="/memories/copilot-session.md">
+# GitHub Copilot Session Memory
+
+## Current Project: Flask Web Server with AI Intelligence
+**Location**: `/home/admin1/Documents/webserver`
+**Repository**: https://github.com/mooglemr30-cyber/webserver
+**Branch**: main
+
+## Active Session Context (2025-11-02)
+
+### Latest Changes - AI Chat Bot Integration ✅
+
+#### Bot Configuration Update
+- **Changed from Bot ID 1 to Bot ID 2** (Code Review Bot)
+- Bot 1 (Neural Assistant) was echoing questions instead of answering
+- Bot 2 specializes in: code analysis, security, architecture, performance
+- Bot 3 (Support Agent) available for troubleshooting
+
+#### Files Modified
+1. **ai_bot_chat.py**: Changed `BOT_ID = 1` to `BOT_ID = 2`
+2. **src/templates/ai_bot_chat.html**:
+   - Updated BOT_ID from 1 to 2
+   - Changed title to "AI Code Review Bot"
+   - Converted input field to textarea for code pasting
+   - Added Ctrl+Enter shortcut
+   - Updated button to "🔍 Review Code"
+   - Added monospace font for code display
+   - Updated welcome message with Bot 2 capabilities
+
+### Server Configuration
+- **Service**: webserver.service (systemd)
+- **Status**: Active and running ✅
+- **Port**: 8000
+- **URL**: http://localhost:8000/
+- **Python**: 3.12.3 in virtualenv (.venv)
+- **Flask**: 2.3.7
+
+### API Endpoints Working ✅
+All tested and confirmed functional:
+
+#### Programs API (Unversioned Aliases)
+- `/api/programs/list` → lists uploaded programs
+- `/api/programs/upload` → upload new programs
+- `/api/programs/execute` → run programs
+- `/api/programs/delete` → remove programs
+
+#### Files API (Unversioned Aliases - Fixed This Session)
+- `/api/files/list` → list uploaded files
+- `/api/files/upload` → upload files
+- `/api/files/download/<filename>` → download files
+- `/api/files/delete/<filename>` → delete files
+- `/api/files/storage` → storage info
+
+#### AI Chat Integration
+- **Endpoint**: https://gpt.ecigdis.co.nz/ai-agent/api/chat.php
+- **Authentication**: None required (no API key)
+- **Format**: JSON POST with `{"message": "text", "bot_id": 2}`
+- **Bot IDs Available**:
+  - Bot 1: Neural Assistant (echoes questions)
+  - Bot 2: Code Review Bot ✅ (current)
+  - Bot 3: Support Agent (troubleshooting)
+  - Bots 4-10: Non-functional
+
+#### Web Pages
+- `/` - Main interface
+- `/ai-chat` - AI Code Review Bot interface ✅
+- `/test-api` - API testing page
+
+### Investigation Results
+
+#### SSH Server Investigation (2025-11-03)
+- **Target**: pearce@192.168.1.29 (password: pearce)
+- **Public IP**: 125.236.217.224
+- **Finding**: This is NOT the API host server
+- **API Host**: 45.32.241.246 (gpt.ecigdis.co.nz)
+- **Cloudways App**: /home/129337.cloudwaysapps.com (Python forecast app, tools, docs)
+- **No AI API Found**: No chat.php, ai-agent directory, or bot configuration found
+- **Conclusion**: API is hosted externally on 45.32.241.246 (cannot access or modify)
+
+#### Bot Testing Results
+Created `test_bots.sh` to test all 10 bot IDs:
+- **Bot 1**: Echoes questions, asks for clarification ❌
+- **Bot 2**: Code Review Bot - specialized for code ✅
+- **Bot 3**: Support Agent - technical support ✅
+- **Bots 4-10**: ERROR responses ❌
+
+### Known Issues & Solutions
+
+#### Problem 1: Files API Not Working
+**Solution**: ✅ Added unversioned aliases in `src/app.py` (lines ~2088-2106)
+- Frontend expects `/api/files/*`
+- Backend had `/api/v2/files/*`
+- Added aliases to match frontend expectations
+
+#### Problem 2: Bot 1 Poor Responses
+**Solution**: ✅ Switched to Bot ID 2 (Code Review Bot)
+- Bot 1 echoes questions instead of answering
+- Bot 2 provides actual code analysis
+- Updated both CLI and web interface
+
+#### Problem 3: Input Field Too Small for Code
+**Solution**: ✅ Changed to textarea with monospace font
+- Converted `<input>` to `<textarea rows="5">`
+- Added `font-family: 'Courier New', monospace`
+- Added Ctrl+Enter keyboard shortcut
+- Made it resizable vertically
+
+### File Locations
+
+#### Main Application
+- `src/app.py` - Flask application (main routes)
+- `src/templates/` - HTML templates
+- `ai_bot_chat.py` - CLI chat program
+
+#### Test Files
+- `test_api.html` - Comprehensive API tester
+- `test_bots.sh` - Bot capability tester
+- `comprehensive_test.py` - Various test scripts
+
+#### Documentation Created
+- `API_TEST_RESULTS.md` - API testing results
+- `AI_CHAT_INTEGRATION.md` - Chat integration docs
+- `BOT_INVESTIGATION.md` - Bot analysis and recommendations
+
+### Recent Command History
+1. Created `test_bots.sh` to test bot capabilities
+2. Executed bot tests - discovered Bot 2 is better for code
+3. Updated `ai_bot_chat.py` BOT_ID to 2
+4. Updated `ai_bot_chat.html` BOT_ID to 2
+5. Changed input to textarea for code pasting
+6. Server automatically restarted via systemd
+
+### Bot Testing Results (2025-11-02 23:57)
+**ISSUE DISCOVERED**: All bots (1, 2, 3) only respond with capability descriptions, not actual assistance.
+
+Test attempts:
+- Bot 2: Sent code with SQL injection vulnerability → Generic "I can help with..." response
+- Bot 3: Sent specific bug question → Generic "What can I help with?" response
+- Bot 1: Same behavior (echoes question)
+
+**Conclusion**: The external API bots are not functional AI assistants. They're placeholder responses.
+
+### Next Possible Actions
+1. ✅ Bot switched to Code Review (COMPLETED)
+2. ✅ Textarea added for code input (COMPLETED)
+3. ❌ Test Bot 2 with actual code review (FAILED - bots don't work)
+4. 🔄 **RECOMMENDED**: Install Ollama for real AI functionality
+5. ⏳ Add bot selector dropdown (optional)
+6. ⏳ Add navigation link to AI chat from main page
+7. ⏳ Upload ai_bot_chat.py as executable program
+
+### Alternative AI Options Documented
+In case current API insufficient:
+1. **Ollama** (local, free) - Recommended
+2. **OpenAI GPT API** (paid, best quality)
+3. **Google Gemini** (free tier available)
+4. **Anthropic Claude** (paid, high quality)
+
+See `BOT_INVESTIGATION.md` for full details.
+
+### System Credentials
+- **User**: admin1
+- **Sudo Password**: admin
+- **SSH Target**: pearce@192.168.1.29 (password: pearce)
+
+### Repository Status
+- Clean working directory
+- All changes committed and pushed
+- Service running stable
+- APIs tested and working
+
+---
+**Last Updated**: 2025-11-02 23:16 NZDT
+**Session Status**: Active - Bot 2 integration complete
+**Next Action**: Test code review functionality with Bot 2
+
+</memory>
+
+<memory path="/memories/ssh_migration_status.md">
+# SSH Migration Status (2025-10-31)
+
+## Remote Target
+Host: 192.168.1.29
+User: pearce
+Port: 22
+Auth: password (public key not yet configured) 
+
+## Completed Items
+- Created remote_config.json and .env.remote
+- Added deploy_to_remote.sh, remote_setup.sh, remote_test.sh
+- Parameterized setup_and_run.sh for optional remote sync
+- Connectivity test attempted: permission denied (needs password or key)
+- Local baseline AI intelligence test succeeded (TinyDB backend functioning)
+- Documented migration in MIGRATION_SSH_GUIDE.md
+
+## Outstanding
+- First manual SSH login required (password pearce) to establish trust
+- Optional: Configure SSH key and switch auth_method to key
+- Remote directory /home/pearce/webserver must be created (script assumes existence)
+- Run deploy_to_remote.sh after confirming SSH access
+- Execute remote_setup.sh then remote_test.sh
+- Optionally add systemd service for remote startup
+
+## Next Suggested Steps
+1. Manually run: ssh pearce@192.168.1.29 (enter password)
+2. Create directory: mkdir -p /home/pearce/webserver
+3. Run local deploy script: bash deploy_to_remote.sh
+4. Run remote setup: bash remote_setup.sh
+5. Verify: bash remote_test.sh
+6. (Optional) Add SSH key for passwordless auth
+
+## Notes
+- No credentials stored in code; password must be exported or entered interactively.
+- rsync uses --delete; confirm remote path before running.
+- AI intelligence file will appear under data/ai/intelligence.json after deploy.
+
+</memory>
+
+<memory path="/memories/system-credentials.md">
+# System Credentials
+
+## User: admin1
+- **Sudo Password**: admin
+- **System**: Ubuntu Linux
+- **Home Directory**: /home/admin1
+
+## Notes
+- Use this password for systemd service setup and system administration tasks
+- Password stored for convenience in automation tasks
+
+</memory>
+</memories>
