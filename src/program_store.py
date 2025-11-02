@@ -92,6 +92,10 @@ class ProgramStore:
         if not filename or not filename.strip():
             raise ValueError("Filename cannot be empty")
         
+        # Check for path traversal attempts
+        if '..' in filename or filename.startswith('/'):
+            raise ValueError("Filename contains invalid path traversal characters")
+        
         # Use werkzeug's secure_filename and ensure it's safe
         safe_name = secure_filename(filename)
         if not safe_name:
@@ -115,6 +119,10 @@ class ProgramStore:
         Raises:
             ValueError: If content contains dangerous patterns or is too large
         """
+        # Check for empty content
+        if not content or len(content) == 0:
+            raise ValueError("File content cannot be empty")
+        
         # Check file size
         if len(content) > self.max_file_size:
             raise ValueError(
@@ -360,9 +368,24 @@ class ProgramStore:
         return project_info
     
     def _sanitize_path(self, path: str) -> str:
-        """Sanitize a file path for safe storage."""
+        """
+        Sanitize a file path for safe storage.
+        
+        Args:
+            path: File path to sanitize
+            
+        Returns:
+            Safe file path
+            
+        Raises:
+            ValueError: If path contains dangerous elements
+        """
+        # Check for path traversal
+        if '..' in path:
+            raise ValueError("Path contains invalid traversal characters")
+        
         # Remove any dangerous path components
-        path = path.replace('..', '').replace('\\', '/')
+        path = path.replace('\\', '/')
         path_parts = [self._sanitize_filename(part) for part in path.split('/') if part and part != '.']
         return '/'.join(path_parts)
     
