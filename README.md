@@ -2,7 +2,7 @@
 
 **A comprehensive Flask-based web server for localhost data storage, file management, program execution, voice chat, and command execution with JWT authentication and multiple public tunnel options.**
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Flask 3.1+](https://img.shields.io/badge/flask-3.1+-green.svg)](https://flask.palletsprojects.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![JWT Auth](https://img.shields.io/badge/auth-JWT-orange.svg)](https://jwt.io/)
@@ -37,6 +37,7 @@
 - **[GETTING_STARTED.md](docs/GETTING_STARTED.md)** - Installation and quick start guide
 - **[📱 MOBILE_APP_SETUP.md](MOBILE_APP_SETUP.md)** - **Mobile app setup with hidden tunnel (NEW!)**
 - **[QUICK_START.md](QUICK_START.md)** - Fast setup for impatient users
+- **[SECURITY.md](SECURITY.md)** - **Security best practices and deployment checklist** ⚠️
 
 ### Technical Documentation
 - **[PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)** - Project summary, tech stack, features
@@ -403,6 +404,9 @@ MIT License - see LICENSE file
 **Built with ❤️ using Flask**
 
 **Version**: 2.0.0  
-**Python**: 3.8+  
+**Python**: 3.9+ (Flask 3.x requirement)  
+**Flask**: 3.1+  
 **Documentation**: 5,000+ lines across 6 files  
 **Coverage**: 100% of codebase documented
+
+⚠️ **Upgrading from v1.x?** See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for upgrade instructions.

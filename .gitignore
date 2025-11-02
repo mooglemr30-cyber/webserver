@@ -118,6 +118,11 @@ data/*.json
 data/programs/*/
 data/uploads/
 data/exports/
+data/privileged/
+data/config/admin_credentials.txt
+data/users.json
+data/webserver.db*
+data/backups/
 
 # Server runtime
 server.out

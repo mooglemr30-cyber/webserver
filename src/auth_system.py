@@ -111,8 +111,12 @@ class AuthenticationManager:
     
     def _create_default_admin(self):
         """Create default admin user"""
+        import secrets
         admin_id = str(uuid.uuid4())
-        password_hash = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt())
+        # Generate a secure random password instead of using 'admin123'
+        # The password should be changed on first login
+        secure_password = secrets.token_urlsafe(16)
+        password_hash = bcrypt.hashpw(secure_password.encode('utf-8'), bcrypt.gensalt())
         
         admin = User(
             user_id=admin_id,
@@ -124,7 +128,31 @@ class AuthenticationManager:
         
         self.users[admin_id] = admin
         self._save_users()
-        print("Default admin created - username: admin, password: admin123")
+        
+        # Log the secure password to a secure location
+        # WARNING: This should be stored securely and the password should be changed on first login
+        # Use CREDENTIALS_DIR env var if set, otherwise use config directory
+        creds_dir = os.getenv('CREDENTIALS_DIR')
+        if creds_dir and os.path.exists(creds_dir):
+            credentials_file = os.path.join(creds_dir, 'admin_credentials.txt')
+        else:
+            credentials_file = os.path.join(os.path.dirname(self.users_file), 'admin_credentials.txt')
+        
+        # Ensure the directory exists with secure permissions
+        os.makedirs(os.path.dirname(credentials_file), mode=0o700, exist_ok=True)
+        
+        # Write credentials with secure file permissions
+        with os.fdopen(os.open(credentials_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f:
+            f.write(f"Default Admin Credentials\n")
+            f.write(f"=" * 50 + "\n")
+            f.write(f"Username: admin\n")
+            f.write(f"Password: {secure_password}\n")
+            f.write(f"Created: {datetime.now(datetime.now().astimezone().tzinfo).isoformat()}\n\n")
+            f.write(f"⚠️  IMPORTANT: Change this password immediately after first login!\n")
+        
+        print(f"Default admin created - username: admin")
+        print(f"⚠️  Password saved to: {credentials_file}")
+        print(f"⚠️  CHANGE PASSWORD IMMEDIATELY AFTER FIRST LOGIN!")
     
     def hash_password(self, password: str) -> str:
         """Hash a password using bcrypt"""
@@ -378,7 +406,9 @@ def create_auth_decorators(auth_manager: AuthenticationManager):
 # Example usage:
 if __name__ == "__main__":
     # Initialize auth manager
-    auth = AuthenticationManager(secret_key="your-secret-key-here")
+    # NOTE: Use a secure secret key from environment variables in production
+    # Example: os.getenv('JWT_SECRET_KEY', secrets.token_urlsafe(32))
+    auth = AuthenticationManager(secret_key="your-secret-key-here-CHANGE-IN-PRODUCTION")
     
     # Register a user
     success, msg, user = auth.register_user("testuser", "test@example.com", "password123")
