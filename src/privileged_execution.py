@@ -81,20 +81,22 @@ class PrivilegedCommandSystem:
                 'note': 'This passphrase grants full sudo access. Protect it carefully.'
             }, f, indent=2)
         
-        # Also save to TOKENSANDLOGINS for easy access
-        token_dir = Path("/run/media/admin1/1E1EC1FE1EC1CF49/to delete/TOKENSANDLOGINS")
-        if token_dir.exists():
-            with open(token_dir / "PRIVILEGED_PASSPHRASE.txt", 'w') as f:
-                f.write(f"PRIVILEGED SUDO PASSPHRASE\n")
-                f.write(f"=" * 50 + "\n\n")
-                f.write(f"Generated: {datetime.now().isoformat()}\n\n")
-                f.write(f"Passphrase: {passphrase}\n\n")
-                f.write(f"⚠️  WARNING: This passphrase grants full sudo access!\n")
-                f.write(f"Only share with TRUSTED AI agents and tools.\n\n")
-                f.write(f"Usage:\n")
-                f.write(f"  POST /api/privileged/execute\n")
-                f.write(f"  Headers: X-Privileged-Passphrase: {passphrase}\n")
-                f.write(f"  Body: {{\"command\": \"your sudo command\"}}\n")
+        # Also save to credentials directory if configured via environment variable
+        token_dir_env = os.getenv('CREDENTIALS_DIR')
+        if token_dir_env:
+            token_dir = Path(token_dir_env)
+            if token_dir.exists():
+                with open(token_dir / "PRIVILEGED_PASSPHRASE.txt", 'w') as f:
+                    f.write(f"PRIVILEGED SUDO PASSPHRASE\n")
+                    f.write(f"=" * 50 + "\n\n")
+                    f.write(f"Generated: {datetime.now().isoformat()}\n\n")
+                    f.write(f"Passphrase: {passphrase}\n\n")
+                    f.write(f"⚠️  WARNING: This passphrase grants full sudo access!\n")
+                    f.write(f"Only share with TRUSTED AI agents and tools.\n\n")
+                    f.write(f"Usage:\n")
+                    f.write(f"  POST /api/privileged/execute\n")
+                    f.write(f"  Headers: X-Privileged-Passphrase: {passphrase}\n")
+                    f.write(f"  Body: {{\"command\": \"your sudo command\"}}\n")
         
         return passphrase_hash
     
