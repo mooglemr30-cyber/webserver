@@ -37,6 +37,7 @@
 - **[GETTING_STARTED.md](docs/GETTING_STARTED.md)** - Installation and quick start guide
 - **[📱 MOBILE_APP_SETUP.md](MOBILE_APP_SETUP.md)** - **Mobile app setup with hidden tunnel (NEW!)**
 - **[QUICK_START.md](QUICK_START.md)** - Fast setup for impatient users
+- **[SECURITY.md](SECURITY.md)** - **Security best practices and deployment checklist** ⚠️
 
 ### Technical Documentation
 - **[PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)** - Project summary, tech stack, features
