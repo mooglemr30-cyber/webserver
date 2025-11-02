@@ -1,0 +1,7 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.6.0 -- /home/admin1/Documents/webserver/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/admin1/Documents/webserver
+plugins: asyncio-0.23.8, cov-4.1.0, mock-3.15.1
+asyncio: mode=Mode.STRICT
+collecting ... 
