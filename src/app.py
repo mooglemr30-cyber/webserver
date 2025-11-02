@@ -2062,6 +2062,47 @@ def get_program_info_v2(filename):
             'error': str(e)
         }), 500
 
+# ---------------------------
+# Unversioned API aliases for backwards compatibility
+# ---------------------------
+
+# Programs API aliases (point to v2)
+@app.route('/api/programs/list', methods=['GET'])
+def list_programs_alias():
+    return v2_list_programs()
+
+@app.route('/api/programs/upload', methods=['POST'])
+def upload_program_alias():
+    return upload_program_v2()
+
+@app.route('/api/programs/upload-multiple', methods=['POST'])
+def upload_multiple_programs_alias():
+    return upload_multiple_programs_v2()
+
+@app.route('/api/programs/project/<project_id>/files', methods=['GET'])
+def list_project_files_alias(project_id):
+    return list_project_files_v2(project_id)
+
+@app.route('/api/programs/execute/<filename>', methods=['POST'])
+def execute_program_alias(filename):
+    return v2_execute_program(filename)
+
+@app.route('/api/programs/execute-terminal/<project_id>', methods=['POST'])
+def execute_project_terminal_alias(project_id):
+    return v2_execute_project_terminal(project_id)
+
+@app.route('/api/programs/project/<project_id>/set-main', methods=['POST'])
+def set_project_main_file_alias(project_id):
+    return set_project_main_file_v2(project_id)
+
+@app.route('/api/programs/delete/<filename>', methods=['DELETE'])
+def delete_program_alias(filename):
+    return delete_program_v2(filename)
+
+@app.route('/api/programs/info/<filename>', methods=['GET'])
+def get_program_info_alias(filename):
+    return get_program_info_v2(filename)
+
 # File Storage Routes
 @app.route('/api/v2/files/upload', methods=['POST'])
 def upload_files_v2():
