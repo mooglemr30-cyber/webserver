@@ -30,17 +30,42 @@ import threading
 import time
 import hashlib
 import secrets
+import shlex
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 import re
 from collections import defaultdict
 
+# Default timeout for commands (5 minutes)
+DEFAULT_TIMEOUT = 300
+
+# Timeout configuration
+MIN_TIMEOUT = 1
+MAX_TIMEOUT = 1800  # 30 minutes
+
+# Dangerous command patterns that should be blocked
+BLOCKED_COMMAND_PATTERNS = [
+    r'rm\s+-rf\s+/\s*$',  # rm -rf /
+    r'rm\s+-rf\s+/\*',  # rm -rf /*
+    r':\(\)\{.*:\|:.*\};:',  # Fork bomb
+    r'dd\s+if=/dev/zero\s+of=/',  # Disk wipe
+    r'mkfs\.',  # Format filesystem
+    r'>\s*/dev/sda',  # Write to disk device
+]
+
 
 class PrivilegedCommandSystem:
     """Manages privileged command execution for trusted AI agents"""
     
-    def __init__(self, data_dir: str = "data"):
+    def __init__(self, data_dir: str = "data", default_timeout: int = DEFAULT_TIMEOUT):
+        """
+        Initialize the privileged command system.
+        
+        Args:
+            data_dir: Directory for storing data and logs
+            default_timeout: Default timeout for commands in seconds
+        """
         self.data_dir = Path(data_dir)
         self.privileged_dir = self.data_dir / "privileged"
         self.privileged_dir.mkdir(parents=True, exist_ok=True)
@@ -50,6 +75,9 @@ class PrivilegedCommandSystem:
         self.command_log_file = self.privileged_dir / "command_log.json"
         self.learning_data_file = self.privileged_dir / "learning_data.json"
         self.access_log_file = self.privileged_dir / "access_log.json"
+        
+        # Configuration
+        self.default_timeout = min(default_timeout, MAX_TIMEOUT)
         
         # Thread safety
         self.lock = threading.Lock()
@@ -146,12 +174,45 @@ class PrivilegedCommandSystem:
             with open(self.learning_data_file, 'w') as f:
                 json.dump(self.learning_data, f, indent=2)
     
+    def _validate_command(self, command: str) -> None:
+        """
+        Validate command for security issues.
+        
+        Args:
+            command: Command to validate
+            
+        Raises:
+            ValueError: If command contains dangerous patterns
+        """
+        if not command or not command.strip():
+            raise ValueError("Command cannot be empty")
+        
+        # Check for blocked patterns
+        for pattern in BLOCKED_COMMAND_PATTERNS:
+            if re.search(pattern, command, re.IGNORECASE):
+                raise ValueError(
+                    f"Command blocked: contains dangerous pattern"
+                )
+        
+        # Basic shell syntax validation (not comprehensive, but catches obvious errors)
+        # Note: This is not a complete shell parser and should not be relied upon
+        # for security. The blocked patterns above provide the security layer.
+        try:
+            # Just verify the string can be parsed, even if it contains shell operators
+            # We don't try to remove operators as that could bypass validation
+            tokens = shlex.split(command, posix=True)
+            if not tokens:
+                raise ValueError("Command cannot be empty after parsing")
+        except ValueError as e:
+            raise ValueError(f"Invalid command syntax: {str(e)}")
+    
     def execute_privileged_command(
         self,
         command: str,
         agent_id: str,
-        timeout: int = 300,
-        working_dir: Optional[str] = None
+        timeout: Optional[int] = None,
+        working_dir: Optional[str] = None,
+        env: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """
         Execute a privileged command with sudo
@@ -159,12 +220,25 @@ class PrivilegedCommandSystem:
         Args:
             command: The command to execute (sudo will be prepended if needed)
             agent_id: Identifier for the AI agent making the request
-            timeout: Command timeout in seconds (default 5 minutes)
+            timeout: Command timeout in seconds (default: system default, max: 30 minutes)
             working_dir: Working directory for command execution
+            env: Additional environment variables
         
         Returns:
             Dict with execution results, output, and metadata
+            
+        Raises:
+            ValueError: If command validation fails
         """
+        # Validate command first
+        self._validate_command(command)
+        
+        # Set timeout
+        if timeout is None:
+            timeout = self.default_timeout
+        else:
+            timeout = min(timeout, MAX_TIMEOUT)
+        
         start_time = time.time()
         execution_id = secrets.token_hex(8)
         
@@ -179,6 +253,11 @@ class PrivilegedCommandSystem:
         # Log access attempt
         self._log_access(agent_id, command, execution_id)
         
+        # Prepare environment
+        exec_env = os.environ.copy()
+        if env:
+            exec_env.update(env)
+        
         try:
             # Execute command
             result = subprocess.run(
@@ -187,7 +266,8 @@ class PrivilegedCommandSystem:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                cwd=working_dir
+                cwd=working_dir,
+                env=exec_env
             )
             
             duration = time.time() - start_time

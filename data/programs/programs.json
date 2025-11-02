@@ -2709,5 +2709,62 @@
     "execution_count": 0,
     "last_executed": null,
     "history": []
+  },
+  "program_1762085201": {
+    "program_id": "program_1762085201",
+    "filename": "test_program.py",
+    "original_filename": "test_program.py",
+    "description": "Test upload",
+    "program_type": "python",
+    "type": "single",
+    "size": 979,
+    "upload_time": "2025-11-02T12:06:41.540604",
+    "execution_count": 4,
+    "last_executed": "2025-11-02T12:07:01.904309",
+    "history": [
+      {
+        "timestamp": "2025-11-02T12:06:51.961233",
+        "success": true,
+        "exit_code": 0,
+        "duration_ms": 22,
+        "command": "python3 /home/runner/work/webserver/webserver/data/programs/program_1762085201/test_program.py test argument",
+        "output_size": 428
+      },
+      {
+        "timestamp": "2025-11-02T12:07:01.904309",
+        "success": true,
+        "exit_code": 0,
+        "duration_ms": 19,
+        "command": "python3 /home/runner/work/webserver/webserver/data/programs/program_1762085201/test_program.py",
+        "output_size": 365
+      }
+    ]
+  },
+  "project_1762085259": {
+    "project_id": "project_1762085259",
+    "project_name": "Test Project",
+    "description": "A test project",
+    "type": "project",
+    "files": [
+      {
+        "filename": "main.py",
+        "relative_path": "main.py",
+        "program_type": "python",
+        "size": 57
+      },
+      {
+        "filename": "utils.py",
+        "relative_path": "utils.py",
+        "program_type": "python",
+        "size": 50
+      }
+    ],
+    "main_file": "main.py",
+    "total_size": 107,
+    "file_count": 2,
+    "upload_time": "2025-11-02T12:07:39.854806",
+    "execution_count": 0,
+    "last_executed": null,
+    "history": []
   }
 }
