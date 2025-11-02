@@ -131,13 +131,23 @@ class AuthenticationManager:
         
         # Log the secure password to a secure location
         # WARNING: This should be stored securely and the password should be changed on first login
-        credentials_file = os.path.join(os.path.dirname(self.users_file), 'admin_credentials.txt')
-        with open(credentials_file, 'w') as f:
+        # Use CREDENTIALS_DIR env var if set, otherwise use config directory
+        creds_dir = os.getenv('CREDENTIALS_DIR')
+        if creds_dir and os.path.exists(creds_dir):
+            credentials_file = os.path.join(creds_dir, 'admin_credentials.txt')
+        else:
+            credentials_file = os.path.join(os.path.dirname(self.users_file), 'admin_credentials.txt')
+        
+        # Ensure the directory exists with secure permissions
+        os.makedirs(os.path.dirname(credentials_file), mode=0o700, exist_ok=True)
+        
+        # Write credentials with secure file permissions
+        with os.fdopen(os.open(credentials_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f:
             f.write(f"Default Admin Credentials\n")
             f.write(f"=" * 50 + "\n")
             f.write(f"Username: admin\n")
             f.write(f"Password: {secure_password}\n")
-            f.write(f"Created: {datetime.utcnow().isoformat()}\n\n")
+            f.write(f"Created: {datetime.now(datetime.now().astimezone().tzinfo).isoformat()}\n\n")
             f.write(f"⚠️  IMPORTANT: Change this password immediately after first login!\n")
         
         print(f"Default admin created - username: admin")

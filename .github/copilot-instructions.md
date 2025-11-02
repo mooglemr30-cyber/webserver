@@ -39,6 +39,7 @@ This is a comprehensive Flask-based web server for localhost data storage, file 
 
 ## Dependencies
 - Keep requirements.txt updated with version constraints
-- Test compatibility with Python 3.8+
+- Test compatibility with Python 3.9+ (Flask 3.x requirement)
 - Prefer stable, well-maintained packages
 - Document any new dependencies in the PR description
+- Run security checks (safety, bandit) before adding new packages
