@@ -2073,15 +2073,15 @@ def list_programs_alias():
 
 @app.route('/api/programs/upload', methods=['POST'])
 def upload_program_alias():
-    return upload_program_v2()
+    return v2_upload_program()
 
 @app.route('/api/programs/upload-multiple', methods=['POST'])
 def upload_multiple_programs_alias():
-    return upload_multiple_programs_v2()
+    return v2_upload_multiple_programs()
 
 @app.route('/api/programs/project/<project_id>/files', methods=['GET'])
 def list_project_files_alias(project_id):
-    return list_project_files_v2(project_id)
+    return v2_get_project_files(project_id)
 
 @app.route('/api/programs/execute/<filename>', methods=['POST'])
 def execute_program_alias(filename):
@@ -2089,11 +2089,11 @@ def execute_program_alias(filename):
 
 @app.route('/api/programs/execute-terminal/<project_id>', methods=['POST'])
 def execute_project_terminal_alias(project_id):
-    return v2_execute_project_terminal(project_id)
+    return execute_project_terminal_v2(project_id)
 
 @app.route('/api/programs/project/<project_id>/set-main', methods=['POST'])
 def set_project_main_file_alias(project_id):
-    return set_project_main_file_v2(project_id)
+    return set_project_main_v2(project_id)
 
 @app.route('/api/programs/delete/<filename>', methods=['DELETE'])
 def delete_program_alias(filename):
