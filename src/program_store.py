@@ -7,21 +7,50 @@ import json
 import os
 import stat
 import shutil
+import re
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from werkzeug.utils import secure_filename
 
+# Maximum file size for uploads (100MB)
+MAX_FILE_SIZE = 100 * 1024 * 1024
+
+# Dangerous file patterns to reject
+DANGEROUS_PATTERNS = [
+    r'\.\./',  # Path traversal
+    r'__import__\s*\(\s*["\']os["\']',  # Python os import
+    r'eval\s*\(',  # eval usage
+    r'exec\s*\(',  # exec usage
+    r'subprocess\.call|subprocess\.run|subprocess\.Popen',  # Direct subprocess
+    r'rm\s+-rf\s+/',  # Dangerous rm commands
+    r':\(\)\{.*:\|:.*\};:',  # Fork bomb pattern
+]
+
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {
+    '.py', '.sh', '.bash', '.js', '.pl', '.pm', '.rb', '.go', '.rs',
+    '.java', '.c', '.cpp', '.h', '.hpp', '.txt', '.md', '.json', '.yaml', 
+    '.yml', '.toml', '.cfg', '.conf', '.ini'
+}
+
 class ProgramStore:
     """Storage and management for executable programs."""
     
-    def __init__(self, programs_dir: str = 'data/programs'):
-        """Initialize the program store."""
+    def __init__(self, programs_dir: str = 'data/programs', max_file_size: int = MAX_FILE_SIZE):
+        """
+        Initialize the program store.
+        
+        Args:
+            programs_dir: Directory to store programs
+            max_file_size: Maximum file size in bytes (default: 100MB)
+        """
         self.programs_dir = os.path.abspath(programs_dir)
         self.metadata_file = os.path.join(self.programs_dir, 'programs.json')
+        self.max_file_size = max_file_size
         
         # Create programs directory if it doesn't exist
         if not os.path.exists(self.programs_dir):
-            os.makedirs(self.programs_dir)
+            os.makedirs(self.programs_dir, mode=0o750)  # Secure permissions
         
         # Load or initialize metadata
         self._load_metadata()
@@ -48,12 +77,62 @@ class ProgramStore:
             raise
     
     def _sanitize_filename(self, filename: str) -> str:
-        """Sanitize filename for safe storage."""
+        """
+        Sanitize filename for safe storage.
+        
+        Args:
+            filename: Original filename to sanitize
+            
+        Returns:
+            Safe filename
+            
+        Raises:
+            ValueError: If filename is invalid or dangerous
+        """
+        if not filename or not filename.strip():
+            raise ValueError("Filename cannot be empty")
+        
         # Use werkzeug's secure_filename and ensure it's safe
         safe_name = secure_filename(filename)
         if not safe_name:
             safe_name = "unnamed_program"
+        
+        # Check file extension
+        _, ext = os.path.splitext(safe_name.lower())
+        if ext and ext not in ALLOWED_EXTENSIONS:
+            raise ValueError(f"File extension '{ext}' is not allowed")
+        
         return safe_name
+    
+    def _validate_content(self, content: bytes, filename: str) -> None:
+        """
+        Validate file content for security issues.
+        
+        Args:
+            content: File content to validate
+            filename: Filename for context
+            
+        Raises:
+            ValueError: If content contains dangerous patterns or is too large
+        """
+        # Check file size
+        if len(content) > self.max_file_size:
+            raise ValueError(
+                f"File size ({len(content)} bytes) exceeds maximum allowed "
+                f"size ({self.max_file_size} bytes)"
+            )
+        
+        # Check for dangerous patterns in text files
+        try:
+            content_str = content.decode('utf-8', errors='ignore')
+            for pattern in DANGEROUS_PATTERNS:
+                if re.search(pattern, content_str, re.IGNORECASE):
+                    raise ValueError(
+                        f"File contains potentially dangerous pattern: {pattern}"
+                    )
+        except UnicodeDecodeError:
+            # Binary files - skip pattern check
+            pass
     
     def _detect_program_type(self, filename: str, content: bytes) -> str:
         """Detect the type of program based on filename and content."""
@@ -91,7 +170,23 @@ class ProgramStore:
         return 'unknown'
     
     def store_program(self, filename: str, content: bytes, description: str = "") -> Dict[str, Any]:
-        """Store a program file in its own directory."""
+        """
+        Store a program file in its own directory.
+        
+        Args:
+            filename: Original filename
+            content: File content as bytes
+            description: Optional description of the program
+            
+        Returns:
+            Dictionary with program information
+            
+        Raises:
+            ValueError: If file validation fails
+        """
+        # Validate content first
+        self._validate_content(content, filename)
+        
         # Sanitize filename
         safe_filename = self._sanitize_filename(filename)
         
@@ -106,9 +201,9 @@ class ProgramStore:
             program_id = f"{original_program_id}_{counter}"
             counter += 1
         
-        # Create program directory
+        # Create program directory with secure permissions
         program_dir = os.path.join(self.programs_dir, program_id)
-        os.makedirs(program_dir, exist_ok=True)
+        os.makedirs(program_dir, mode=0o750, exist_ok=True)
         
         # Store the file inside the program directory
         program_path = os.path.join(program_dir, safe_filename)
@@ -116,13 +211,22 @@ class ProgramStore:
         # Detect program type
         program_type = self._detect_program_type(filename, content)
         
-        # Write program file
-        with open(program_path, 'wb') as f:
-            f.write(content)
-        
-        # Make file executable if it's a script
-        if program_type in ['shell', 'python', 'javascript', 'perl', 'ruby']:
-            os.chmod(program_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+        # Write program file with secure permissions
+        try:
+            with open(program_path, 'wb') as f:
+                f.write(content)
+            
+            # Make file executable if it's a script
+            if program_type in ['shell', 'python', 'javascript', 'perl', 'ruby']:
+                os.chmod(program_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+            else:
+                # Regular file permissions
+                os.chmod(program_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
+        except Exception as e:
+            # Clean up on error
+            if os.path.exists(program_dir):
+                shutil.rmtree(program_dir)
+            raise ValueError(f"Failed to store program: {str(e)}")
         
         # Store metadata
         program_info = {
@@ -145,51 +249,94 @@ class ProgramStore:
         return program_info
     
     def store_multiple_files(self, files_data: List[Dict[str, Any]], project_name: str = "", description: str = "") -> Dict[str, Any]:
-        """Store multiple files as a project."""
+        """
+        Store multiple files as a project.
+        
+        Args:
+            files_data: List of dictionaries with 'filename', 'content', and optional 'relative_path'
+            project_name: Name for the project
+            description: Optional description of the project
+            
+        Returns:
+            Dictionary with project information
+            
+        Raises:
+            ValueError: If file validation fails or project is too large
+        """
+        if not files_data:
+            raise ValueError("No files provided for project")
+        
+        # Validate all files first before storing
+        total_size = 0
+        for file_data in files_data:
+            content = file_data['content']
+            filename = file_data['filename']
+            self._validate_content(content, filename)
+            total_size += len(content)
+        
+        # Check total project size
+        if total_size > self.max_file_size * 10:  # 10x limit for projects
+            raise ValueError(
+                f"Total project size ({total_size} bytes) exceeds maximum "
+                f"allowed size ({self.max_file_size * 10} bytes)"
+            )
+        
         upload_time = datetime.now().isoformat()
         project_id = f"project_{int(datetime.now().timestamp())}"
         
-        # Create project directory
+        # Create project directory with secure permissions
         project_dir = os.path.join(self.programs_dir, project_id)
-        os.makedirs(project_dir, exist_ok=True)
+        os.makedirs(project_dir, mode=0o750, exist_ok=True)
         
         stored_files = []
-        total_size = 0
         main_file = None
         
-        for file_data in files_data:
-            filename = file_data['filename']
-            content = file_data['content']
-            relative_path = file_data.get('relative_path', filename)
-            
-            # Sanitize the relative path
-            safe_relative_path = self._sanitize_path(relative_path)
-            file_path = os.path.join(project_dir, safe_relative_path)
-            
-            # Create directory structure if needed
-            file_dir = os.path.dirname(file_path)
-            if file_dir != project_dir:
-                os.makedirs(file_dir, exist_ok=True)
-            
-            # Write file
-            with open(file_path, 'wb') as f:
-                f.write(content)
-            
-            # Detect program type and make executable if needed
-            program_type = self._detect_program_type(filename, content)
-            if program_type in ['shell', 'python', 'javascript', 'perl', 'ruby']:
-                os.chmod(file_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
-                if main_file is None:  # Set first executable as main file
-                    main_file = safe_relative_path
-            
-            file_info = {
-                'filename': filename,
-                'relative_path': safe_relative_path,
-                'program_type': program_type,
-                'size': len(content)
-            }
-            stored_files.append(file_info)
-            total_size += len(content)
+        try:
+            for file_data in files_data:
+                filename = file_data['filename']
+                content = file_data['content']
+                relative_path = file_data.get('relative_path', filename)
+                
+                # Sanitize the relative path
+                safe_relative_path = self._sanitize_path(relative_path)
+                file_path = os.path.join(project_dir, safe_relative_path)
+                
+                # Validate path doesn't escape project directory
+                real_file_path = os.path.realpath(file_path)
+                real_project_dir = os.path.realpath(project_dir)
+                if not real_file_path.startswith(real_project_dir):
+                    raise ValueError(f"Invalid path: {relative_path} escapes project directory")
+                
+                # Create directory structure if needed
+                file_dir = os.path.dirname(file_path)
+                if file_dir != project_dir:
+                    os.makedirs(file_dir, mode=0o750, exist_ok=True)
+                
+                # Write file
+                with open(file_path, 'wb') as f:
+                    f.write(content)
+                
+                # Detect program type and make executable if needed
+                program_type = self._detect_program_type(filename, content)
+                if program_type in ['shell', 'python', 'javascript', 'perl', 'ruby']:
+                    os.chmod(file_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH)
+                    if main_file is None:  # Set first executable as main file
+                        main_file = safe_relative_path
+                else:
+                    os.chmod(file_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
+                
+                file_info = {
+                    'filename': filename,
+                    'relative_path': safe_relative_path,
+                    'program_type': program_type,
+                    'size': len(content)
+                }
+                stored_files.append(file_info)
+        except Exception as e:
+            # Clean up on error
+            if os.path.exists(project_dir):
+                shutil.rmtree(project_dir)
+            raise ValueError(f"Failed to store project: {str(e)}")
         
         # Store project metadata
         project_info = {

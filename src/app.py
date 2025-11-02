@@ -1479,25 +1479,41 @@ def dashboard_v2_api():
 
 @app.route('/api/v2/programs/upload', methods=['POST'])
 def v2_upload_program():
-    """Upload a single program file."""
+    """
+    Upload a single program file with validation.
+    
+    Form data:
+        file: File - The program file to upload
+        description: str - Optional description of the program
+    """
     try:
         if 'file' not in request.files:
             return jsonify({
                 'success': False,
-                'error': 'No file provided'
+                'error': 'No file provided',
+                'hint': 'Include a file in the request with key "file"'
             }), 400
         
         file = request.files['file']
         if file.filename == '':
             return jsonify({
                 'success': False,
-                'error': 'No file selected'
+                'error': 'No file selected',
+                'hint': 'Select a valid file to upload'
             }), 400
         
         description = request.form.get('description', '')
         
         # Read file content
         content = file.read()
+        
+        # Validate size before processing
+        if len(content) == 0:
+            return jsonify({
+                'success': False,
+                'error': 'File is empty',
+                'hint': 'Upload a file with content'
+            }), 400
         
         # Store the program
         program_info = program_store.store_program(file.filename, content, description)
@@ -1508,27 +1524,45 @@ def v2_upload_program():
             'program': program_info
         })
     
+    except ValueError as e:
+        # Validation errors
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'type': 'validation_error'
+        }), 400
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'type': 'server_error'
         }), 500
 
 @app.route('/api/v2/programs/upload-multiple', methods=['POST'])
 def v2_upload_multiple_programs():
-    """Upload multiple files as a project."""
+    """
+    Upload multiple files as a project with validation.
+    
+    Form data:
+        files[]: List[File] - Multiple files to upload
+        project_name: str - Optional project name
+        description: str - Optional project description
+        relative_paths[]: List[str] - Optional relative paths for files
+    """
     try:
         if 'files[]' not in request.files:
             return jsonify({
                 'success': False,
-                'error': 'No files provided'
+                'error': 'No files provided',
+                'hint': 'Include files in the request with key "files[]"'
             }), 400
         
         files = request.files.getlist('files[]')
         if not files or all(f.filename == '' for f in files):
             return jsonify({
                 'success': False,
-                'error': 'No files selected'
+                'error': 'No files selected',
+                'hint': 'Select at least one valid file to upload'
             }), 400
         
         project_name = request.form.get('project_name', '')
@@ -1563,7 +1597,8 @@ def v2_upload_multiple_programs():
         if not files_data:
             return jsonify({
                 'success': False,
-                'error': 'No valid files to upload'
+                'error': 'No valid files to upload',
+                'hint': 'Ensure files contain valid data'
             }), 400
         
         # Store the project
@@ -1575,10 +1610,18 @@ def v2_upload_multiple_programs():
             'project': project_info
         })
     
+    except ValueError as e:
+        # Validation errors
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'type': 'validation_error'
+        }), 400
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'type': 'server_error'
         }), 500
 
 
@@ -1617,14 +1660,37 @@ def v2_get_project_files(project_id):
 
 @app.route('/api/v2/programs/execute/<filename>', methods=['POST'])
 def v2_execute_program(filename):
-    """Execute an uploaded program."""
+    """
+    Execute an uploaded program with enhanced options.
+    
+    Request JSON body:
+        args: List[str] - Command line arguments
+        use_sudo: bool - Execute with sudo privileges
+        sudo_password: str - Password for sudo (if use_sudo=True)
+        specific_file: str - Specific file to execute in project
+        interactive: bool - Use interactive mode
+        timeout: int - Execution timeout in seconds (default: 30, max: 300)
+        env: Dict[str, str] - Additional environment variables
+    """
     try:
         args = request.json.get('args', []) if request.json else []
         use_sudo = request.json.get('use_sudo', False) if request.json else False
         sudo_password = request.json.get('sudo_password', '') if request.json else ''
         specific_file = request.json.get('specific_file', None) if request.json else None
         interactive = request.json.get('interactive', False) if request.json else False
+        timeout = request.json.get('timeout', 30) if request.json else 30
+        env_vars = request.json.get('env', {}) if request.json else {}
         exec_start = time.perf_counter()
+        
+        # Validate timeout
+        timeout = max(1, min(timeout, 300))  # Between 1 and 300 seconds
+        
+        # Validate environment variables
+        if env_vars and not isinstance(env_vars, dict):
+            return jsonify({
+                'success': False,
+                'error': 'Environment variables must be a dictionary'
+            }), 400
         
         # Get program info and path
         program_info = program_store.get_program_info(filename)
@@ -1712,6 +1778,11 @@ def v2_execute_program(filename):
         if interactive:
             return execute_interactive_program(cmd, os.path.dirname(program_path), use_sudo, sudo_password)
 
+        # Prepare environment
+        exec_env = os.environ.copy()
+        if env_vars:
+            exec_env.update(env_vars)
+        
         # Execute command
         if use_sudo and sudo_password:
             # Use pexpect for sudo commands
@@ -1720,30 +1791,33 @@ def v2_execute_program(filename):
                 sudo_cmd = f"sudo {' '.join(cmd)}"
                 
                 # Spawn the process
-                child = pexpect.spawn('bash', ['-c', sudo_cmd], timeout=30)
+                child = pexpect.spawn('bash', ['-c', sudo_cmd], timeout=timeout, env=exec_env)
                 
                 # Wait for password prompt
                 i = child.expect(['password', 'Password', pexpect.TIMEOUT], timeout=5)
                 if i == 0 or i == 1:
                     child.sendline(sudo_password)
-                    child.expect(pexpect.EOF, timeout=30)
+                    child.expect(pexpect.EOF, timeout=timeout)
                     output = child.before.decode('utf-8', errors='replace')
                     exit_code = child.exitstatus
                 else:
                     return jsonify({
                         'success': False,
-                        'error': 'Password prompt not found or timeout'
+                        'error': 'Password prompt not found or timeout',
+                        'hint': 'Verify sudo is required and password is correct'
                     }), 500
                 
             except pexpect.TIMEOUT:
                 return jsonify({
                     'success': False,
-                    'error': 'Command execution timed out'
+                    'error': f'Command execution timed out after {timeout} seconds',
+                    'hint': 'Try increasing the timeout parameter or check if the program is hanging'
                 }), 500
             except Exception as e:
                 return jsonify({
                     'success': False,
-                    'error': f'Sudo execution failed: {str(e)}'
+                    'error': f'Sudo execution failed: {str(e)}',
+                    'hint': 'Verify sudo password and permissions'
                 }), 500
         else:
             # Regular command execution
@@ -1752,20 +1826,29 @@ def v2_execute_program(filename):
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=30,
-                    cwd=os.path.dirname(program_path)
+                    timeout=timeout,
+                    cwd=os.path.dirname(program_path),
+                    env=exec_env
                 )
                 output = result.stdout + result.stderr
                 exit_code = result.returncode
             except subprocess.TimeoutExpired:
                 return jsonify({
                     'success': False,
-                    'error': 'Program execution timed out (30 seconds)'
+                    'error': f'Program execution timed out after {timeout} seconds',
+                    'hint': 'Try increasing the timeout parameter or check if the program is hanging'
+                }), 500
+            except FileNotFoundError as e:
+                return jsonify({
+                    'success': False,
+                    'error': f'Program interpreter not found: {str(e)}',
+                    'hint': f'Ensure {program_type} interpreter is installed on the system'
                 }), 500
             except Exception as e:
                 return jsonify({
                     'success': False,
-                    'error': f'Execution failed: {str(e)}'
+                    'error': f'Execution failed: {str(e)}',
+                    'hint': 'Check program permissions and syntax'
                 }), 500
         
         # Update execution statistics
